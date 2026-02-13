@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof:*)",
+      "Bash(xargs kill -9 sleep 2 lsof -ti :5050)",
+      "Bash(kill:*)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:roles7.docs.apiary.io)",
+      "WebFetch(domain:unogeeks.com)",
+      "WebFetch(domain:forums.oracle.com)",
+      "WebFetch(domain:blogs.infosys.com)",
+      "Bash(python3 -c \"\nimport requests\nfrom requests.auth import HTTPBasicAuth\nimport json\n\nurl = ''https://fa-etmh-dev5-saasfaprod1.fa.ocs.oraclecloud.com''\n# Vou usar as credenciais que já estão no server log\n# Preciso fazer uma chamada direta para ver a estrutura completa\nr = requests.get\\(\n    f''{url}/ess/rest/scheduler/v1/requests/32917587'',\n    auth=HTTPBasicAuth\\(''TBJ_IMPL'', ''''\\),  # placeholder\n    headers={''Accept'': ''application/json'', ''Content-Type'': ''application/json''},\n    timeout=30\n\\)\nprint\\(f''Status: {r.status_code}''\\)\nprint\\(f''Body: {r.text[:2000]}''\\)\n\")",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "WebFetch(domain:www.metaformers.com)",
+      "WebFetch(domain:community.oracle.com)",
+      "WebFetch(domain:www.techsupper.com)",
+      "WebFetch(domain:www.ateam-oracle.com)",
+      "WebFetch(domain:blog.cloudnueva.com)",
+      "WebFetch(domain:docs.workato.com)"
+    ]
+  }
+}

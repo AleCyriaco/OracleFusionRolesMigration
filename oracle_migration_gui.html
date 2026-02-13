@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OracleFusionRolesMigration</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #242836;
+    --bg4: #2e3345;
+    --accent: #6c5ce7;
+    --accent2: #a29bfe;
+    --accent-glow: rgba(108,92,231,.25);
+    --success: #00b894;
+    --success-bg: rgba(0,184,148,.12);
+    --warning: #fdcb6e;
+    --warning-bg: rgba(253,203,110,.12);
+    --danger: #e17055;
+    --danger-bg: rgba(225,112,85,.12);
+    --info: #74b9ff;
+    --info-bg: rgba(116,185,255,.12);
+    --text: #e4e6ef;
+    --text2: #9a9cae;
+    --text3: #6c6e82;
+    --border: #2e3345;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,.3);
+    --transition: .2s ease;
+  }
+  body[data-theme="light"] {
+    --bg: #f3f6fb;
+    --bg2: #ffffff;
+    --bg3: #e7edf7;
+    --bg4: #d6dfec;
+    --accent: #0f766e;
+    --accent2: #14b8a6;
+    --accent-glow: rgba(20,184,166,.2);
+    --success: #15803d;
+    --success-bg: rgba(21,128,61,.12);
+    --warning: #b45309;
+    --warning-bg: rgba(180,83,9,.12);
+    --danger: #b42318;
+    --danger-bg: rgba(180,35,24,.12);
+    --info: #1d4ed8;
+    --info-bg: rgba(29,78,216,.12);
+    --text: #0f172a;
+    --text2: #334155;
+    --text3: #64748b;
+    --border: #cbd5e1;
+    --shadow: 0 6px 24px rgba(2, 6, 23, .08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, var(--bg2), var(--bg3));
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .header-controls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .lang-switch {
+    display: inline-flex;
+    gap: 6px;
+    padding: 5px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg);
+  }
+  .lang-btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text2);
+    padding: 4px 8px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .lang-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    color: var(--text);
+  }
+  .theme-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+  }
+  .theme-btn:hover { border-color: var(--accent); }
+
+  /* Layout */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .full-width { grid-column: 1 / -1; }
+
+  /* Cards */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .card-header .icon {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .card-body { padding: 20px; }
+  .source-card .card-header { border-left: 3px solid var(--info); }
+  .source-card .icon { background: var(--info-bg); }
+  .target-card .card-header { border-left: 3px solid var(--success); }
+  .target-card .icon { background: var(--success-bg); }
+
+  /* Form */
+  .form-group { margin-bottom: 16px; }
+  .form-group:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  input, select {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border var(--transition), box-shadow var(--transition);
+    outline: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  input::placeholder { color: var(--text3); }
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .password-wrap {
+    position: relative;
+  }
+  .password-wrap input { padding-right: 42px; }
+  .toggle-pass {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-size: 16px; padding: 4px;
+  }
+  .toggle-pass:hover { color: var(--text); }
+
+  /* Connection Test */
+  .test-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text2);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-top: 8px;
+  }
+  .test-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .test-btn.testing { opacity: .6; pointer-events: none; }
+  .test-result {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; margin-left: 12px;
+  }
+  .test-result.ok { color: var(--success); }
+  .test-result.fail { color: var(--danger); }
+
+  /* Operation Card */
+  .op-card .card-header { border-left: 3px solid var(--accent); }
+  .op-card .icon { background: var(--accent-glow); }
+
+  .op-modes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .op-mode {
+    padding: 16px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: center;
+    transition: all var(--transition);
+  }
+  .op-mode:hover { border-color: var(--bg4); }
+  .op-mode.active { border-color: var(--accent); background: var(--accent-glow); }
+  .op-mode .op-icon { font-size: 28px; margin-bottom: 8px; }
+  .op-mode .op-title { font-size: 14px; font-weight: 600; }
+  .op-mode .op-desc { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* File Upload */
+  .file-upload {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-bottom: 16px;
+  }
+  .file-upload:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .file-upload.has-file { border-color: var(--success); background: var(--success-bg); }
+  .file-upload input { display: none; }
+  .file-upload .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .file-upload .upload-text { font-size: 13px; color: var(--text2); }
+  .file-upload .file-name { font-size: 13px; color: var(--success); font-weight: 600; margin-top: 4px; }
+
+  /* Buttons */
+  .actions { display: flex; gap: 12px; margin-top: 20px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition);
+    flex: 1;
+  }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #5a4bd1);
+    color: #fff;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px var(--accent-glow); }
+  .btn-secondary {
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover:not(:disabled) { background: var(--bg4); }
+  .btn-diagnose {
+    margin-left: 8px;
+    background: color-mix(in srgb, var(--accent) 22%, var(--bg3) 78%);
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border) 55%);
+    color: var(--text);
+  }
+  .btn-danger { background: var(--danger); color: #fff; }
+
+  /* Status Panel */
+  .status-panel .card-header { border-left: 3px solid var(--warning); }
+  .status-panel .icon { background: var(--warning-bg); }
+
+  .status-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .step {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    position: relative;
+  }
+  .step:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .step-indicator {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+    transition: all .3s;
+  }
+  .step.pending .step-indicator { background: var(--bg); border: 2px solid var(--border); color: var(--text3); }
+  .step.running .step-indicator { background: var(--accent); color: #fff; animation: pulse 1.5s infinite; }
+  .step.success .step-indicator { background: var(--success); color: #fff; }
+  .step.error .step-indicator { background: var(--danger); color: #fff; }
+  .step.skipped .step-indicator { background: var(--bg3); color: var(--text3); }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+    50% { box-shadow: 0 0 0 8px transparent; }
+  }
+  .step-content { flex: 1; min-width: 0; }
+  .step-title { font-size: 14px; font-weight: 600; }
+  .step-detail { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .step-time { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: 'Fira Code', monospace; }
+
+  /* Progress Bar */
+  .progress-bar {
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width .5s ease;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .progress-fill.success { background: var(--success); }
+  .progress-fill.error { background: var(--danger); }
+  .progress-fill.indeterminate {
+    width: 30% !important;
+    animation: indeterminate 1.5s infinite ease-in-out;
+  }
+  @keyframes indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(430%); }
+  }
+
+  /* Log Viewer */
+  .log-card .card-header { border-left: 3px solid var(--text3); }
+  .log-viewer {
+    background: color-mix(in srgb, var(--bg) 85%, #000 15%);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    max-height: 320px;
+    overflow-y: auto;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .log-entry { display: flex; gap: 8px; }
+  .log-time { color: var(--text3); white-space: nowrap; flex-shrink: 0; }
+  .log-msg { word-break: break-word; }
+  .log-entry.info .log-msg { color: var(--text); }
+  .log-entry.success .log-msg { color: var(--success); }
+  .log-entry.warning .log-msg { color: var(--warning); }
+  .log-entry.error .log-msg { color: var(--danger); }
+  .log-entry.api .log-msg { color: var(--info); }
+
+  .log-controls {
+    display: flex; justify-content: flex-end; gap: 8px;
+    padding: 8px 0 0;
+  }
+  .log-controls button {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .log-controls button:hover { color: var(--text); border-color: var(--accent); }
+
+  /* Summary Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .stat {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-value { font-size: 24px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+  .stat.exported .stat-value { color: var(--info); }
+  .stat.imported .stat-value { color: var(--success); }
+  .stat.errors .stat-value { color: var(--danger); }
+  .stat.time .stat-value { color: var(--warning); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .container { grid-template-columns: 1fr; }
+    .op-modes { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .input-row { grid-template-columns: 1fr; }
+    .header {
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    .header-controls { margin-left: 0; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* Notification banner */
+  .banner {
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .banner.info-banner { background: var(--info-bg); border: 1px solid rgba(116,185,255,.3); color: var(--info); }
+  .banner.warn-banner { background: var(--warning-bg); border: 1px solid rgba(253,203,110,.3); color: var(--warning); }
+  .banner.err-banner { background: var(--danger-bg); border: 1px solid rgba(225,112,85,.3); color: var(--danger); }
+  .banner.ok-banner { background: var(--success-bg); border: 1px solid rgba(0,184,148,.3); color: var(--success); }
+
+  .hidden { display: none !important; }
+
+  /* Offering selector */
+  .offering-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .offering-opt {
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 13px;
+  }
+  .offering-opt:hover { border-color: var(--bg4); }
+  .offering-opt.active { border-color: var(--accent); background: var(--accent-glow); }
+  .offering-opt .off-name { font-weight: 600; }
+  .offering-opt .off-code { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: monospace; }
+
+  /* Access requirements */
+  .role-info-card .card-header { border-left: 3px solid var(--warning); }
+  .role-info-card .icon { background: var(--warning-bg); }
+  .role-info-text { font-size: 13px; color: var(--text2); margin-bottom: 10px; }
+  .role-list {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .role-list li { margin: 6px 0; }
+  .role-list code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+  }
+  .access-result {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    background: var(--bg);
+  }
+  .access-result.ok {
+    color: var(--success);
+    border-color: rgba(0,184,148,.4);
+    background: var(--success-bg);
+  }
+  .access-result.warn {
+    color: var(--warning);
+    border-color: rgba(253,203,110,.4);
+    background: var(--warning-bg);
+  }
+  .access-result.err {
+    color: var(--danger);
+    border-color: rgba(225,112,85,.4);
+    background: var(--danger-bg);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">&#9881;</div>
+  <div>
+    <h1 id="txtHeaderTitle">OracleFusionRolesMigration</h1>
+    <p id="txtHeaderSubtitle">Exportar e importar custom roles, hierarquias e privil&eacute;gios entre ambientes</p>
+  </div>
+  <div class="header-controls">
+    <div class="lang-switch">
+      <button class="lang-btn active" id="lang-pt-BR" onclick="setLanguage('pt-BR')" title="Portugu&ecirc;s (Brasil)">&#x1F1E7;&#x1F1F7; PT-BR</button>
+      <button class="lang-btn" id="lang-en" onclick="setLanguage('en')" title="English">&#x1F1FA;&#x1F1F8; EN</button>
+      <button class="lang-btn" id="lang-es" onclick="setLanguage('es')" title="Espa&ntilde;ol">&#x1F1EA;&#x1F1F8; ES</button>
+    </div>
+    <button class="theme-btn" id="btnTheme" onclick="toggleTheme()" title="Alternar tema">&#x1F319;</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ACCESS REQUIREMENTS -->
+  <div class="card role-info-card full-width">
+    <div class="card-header">
+      <div class="icon">&#x1F512;</div>
+      <span id="txtAccessInfoTitle">Acessos m&iacute;nimos obrigat&oacute;rios</span>
+    </div>
+    <div class="card-body">
+      <p class="role-info-text" id="txtAccessInfoDesc">
+        Antes de iniciar, o sistema valida automaticamente os acessos do usu&aacute;rio e informa roles ausentes.
+      </p>
+      <ul class="role-list" id="requiredRolesList"></ul>
+      <div class="access-result" id="accessCheckResult"></div>
+    </div>
+  </div>
+
+  <!-- SOURCE ENV -->
+  <div class="card source-card">
+    <div class="card-header">
+      <div class="icon">&#x1F4E4;</div>
+      <span id="txtSourceCardTitle">Ambiente de Origem (Source)</span>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label id="lblSourceUrl">URL do Ambiente</label>
+        <input type="url" id="srcUrl" placeholder="https://dev-acme-fa.example.oraclecloud.com" />
+      </div>
+      <div class="input-row">
+        <div class="form-group">
+          <label id="lblSourceUser">Usu&aacute;rio</label>
+          <input type="text" id="srcUser" placeholder="svc_integration_demo" />
+        </div>
+        <div class="form-group">
+          <label id="lblSourcePass">Senha</label>
+          <div class="password-wrap">
+            <input type="password" id="srcPass" placeholder="********" />
+            <button class="toggle-pass" onclick="togglePass('srcPass', this)">&#128065;</button>
+          </div>
+        </div>
+      </div>
+      <button class="test-btn" onclick="testConnection('src')">
+        <span>&#9889;</span> <span id="txtBtnTestSource">Testar Conex&atilde;o</span>
+      </button>
+      <span id="srcTestResult" class="test-result hidden"></span>
+    </div>
+  </div>
+
+  <!-- TARGET ENV -->
+  <div class="card target-card">
+    <div class="card-header">
+      <div class="icon">&#x1F4E5;</div>
+      <span id="txtTargetCardTitle">Ambiente de Destino (Target)</span>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label id="lblTargetUrl">URL do Ambiente</label>
+        <input type="url" id="tgtUrl" placeholder="https://uat-acme-fa.example.oraclecloud.com" />
+      </div>
+      <div class="input-row">
+        <div class="form-group">
+          <label id="lblTargetUser">Usu&aacute;rio</label>
+          <input type="text" id="tgtUser" placeholder="svc_integration_demo" />
+        </div>
+        <div class="form-group">
+          <label id="lblTargetPass">Senha</label>
+          <div class="password-wrap">
+            <input type="password" id="tgtPass" placeholder="********" />
+            <button class="toggle-pass" onclick="togglePass('tgtPass', this)">&#128065;</button>
+          </div>
+        </div>
+      </div>
+      <button class="test-btn" onclick="testConnection('tgt')">
+        <span>&#9889;</span> <span id="txtBtnTestTarget">Testar Conex&atilde;o</span>
+      </button>
+      <span id="tgtTestResult" class="test-result hidden"></span>
+    </div>
+  </div>
+
+  <!-- OPERATION -->
+  <div class="card op-card full-width">
+    <div class="card-header">
+      <div class="icon">&#x2699;</div>
+      <span id="txtOperationTitle">Opera&ccedil;&atilde;o</span>
+    </div>
+    <div class="card-body">
+      <div class="op-modes">
+        <div class="op-mode active" onclick="selectMode('export')" id="mode-export">
+          <div class="op-icon">&#x1F4E4;</div>
+          <div class="op-title" id="txtModeExportTitle">Exportar Apenas</div>
+          <div class="op-desc" id="txtModeExportDesc">Exporta roles do ambiente de origem e baixa o arquivo ZIP</div>
+        </div>
+        <div class="op-mode" onclick="selectMode('full')" id="mode-full">
+          <div class="op-icon">&#x1F504;</div>
+          <div class="op-title" id="txtModeFullTitle">Exportar + Importar</div>
+          <div class="op-desc" id="txtModeFullDesc">Exporta do origem e importa automaticamente no destino</div>
+        </div>
+        <div class="op-mode" onclick="selectMode('import')" id="mode-import">
+          <div class="op-icon">&#x1F4E5;</div>
+          <div class="op-title" id="txtModeImportTitle">Importar Apenas</div>
+          <div class="op-desc" id="txtModeImportDesc">Importa roles a partir de um arquivo ZIP previamente exportado</div>
+        </div>
+      </div>
+
+      <!-- File upload for import mode -->
+      <div id="importFileSection" class="hidden">
+        <label id="lblImportFile">Arquivo ZIP de Roles Exportadas</label>
+        <div class="file-upload" id="fileDropZone" onclick="document.getElementById('importFile').click()">
+          <input type="file" id="importFile" accept=".zip" onchange="handleFileSelect(event)" />
+          <div class="upload-icon">&#x1F4C1;</div>
+          <div class="upload-text" id="txtUploadHint">Clique ou arraste o arquivo ZIP aqui</div>
+          <div class="file-name hidden" id="selectedFileName"></div>
+        </div>
+      </div>
+
+      <!-- Offering Selection -->
+      <label id="lblOffering">Offering / M&oacute;dulo</label>
+      <div class="offering-grid">
+        <div class="offering-opt active" onclick="selectOffering('financials', this)">
+          <div class="off-name" id="txtOfferingFinancials">Financials</div>
+          <div class="off-code">FIN_FSCM_OFFERING</div>
+        </div>
+        <div class="offering-opt" onclick="selectOffering('hcm', this)">
+          <div class="off-name">HCM</div>
+          <div class="off-code">PER_WKF_DEV</div>
+        </div>
+        <div class="offering-opt" onclick="selectOffering('sales', this)">
+          <div class="off-name" id="txtOfferingSales">Sales (CX)</div>
+          <div class="off-code">ZBS_SALES</div>
+        </div>
+        <div class="offering-opt" onclick="selectOffering('scm', this)">
+          <div class="off-name">SCM</div>
+          <div class="off-code">SCM_OFFERING</div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:16px">
+        <label id="lblCustomOffering">Offering Code customizado (opcional)</label>
+        <input type="text" id="customOfferingCode" placeholder="Leave empty to use selected offering code" />
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btnExecute" onclick="executeOperation()">
+          <span>&#x25B6;</span> <span id="txtBtnExecute">Executar Migra&ccedil;&atilde;o</span>
+        </button>
+        <button class="btn btn-secondary" id="btnCancel" onclick="cancelOperation()" disabled>
+          <span>&#x25A0;</span> <span id="txtBtnCancel">Cancelar</span>
+        </button>
+        <button class="btn btn-secondary btn-diagnose" id="btnDiag" onclick="runDiagnostic()">
+          <span>&#x1F50D;</span> <span id="txtBtnDiag">Diagnosticar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="card status-panel full-width">
+    <div class="card-header">
+      <div class="icon">&#x1F4CA;</div>
+      <span id="txtStatusTitle">Status da Opera&ccedil;&atilde;o</span>
+    </div>
+    <div class="card-body">
+      <div id="statusBanner" class="banner info-banner hidden"></div>
+
+      <div class="status-steps" id="statusSteps">
+        <div class="step pending" id="step-validate">
+          <div class="step-indicator">1</div>
+          <div class="step-content">
+            <div class="step-title" id="txtStepValidateTitle">Validar Conex&otilde;es</div>
+            <div class="step-detail" id="txtStepValidateDetail">Verificar credenciais e conectividade com os ambientes</div>
+            <div class="step-time" id="step-validate-time"></div>
+          </div>
+        </div>
+        <div class="step pending" id="step-export">
+          <div class="step-indicator">2</div>
+          <div class="step-content">
+            <div class="step-title" id="txtStepExportTitle">Exportar Roles</div>
+            <div class="step-detail" id="txtStepExportDetail">Iniciar processo de exporta&ccedil;&atilde;o via FSM REST API</div>
+            <div class="step-time" id="step-export-time"></div>
+            <div class="progress-bar hidden" id="step-export-progress"><div class="progress-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="step pending" id="step-download">
+          <div class="step-indicator">3</div>
+          <div class="step-content">
+            <div class="step-title" id="txtStepDownloadTitle">Download do Arquivo</div>
+            <div class="step-detail" id="txtStepDownloadDetail">Baixar ZIP com CSVs de roles, hierarquias e privil&eacute;gios</div>
+            <div class="step-time" id="step-download-time"></div>
+          </div>
+        </div>
+        <div class="step pending" id="step-import">
+          <div class="step-indicator">4</div>
+          <div class="step-content">
+            <div class="step-title" id="txtStepImportTitle">Importar Roles</div>
+            <div class="step-detail" id="txtStepImportDetail">Upload e importa&ccedil;&atilde;o no ambiente de destino</div>
+            <div class="step-time" id="step-import-time"></div>
+            <div class="progress-bar hidden" id="step-import-progress"><div class="progress-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="step pending" id="step-sync">
+          <div class="step-indicator">5</div>
+          <div class="step-content">
+            <div class="step-title" id="txtStepSyncTitle">Sincronizar Seguran&ccedil;a</div>
+            <div class="step-detail" id="txtStepSyncDetail">Executar &quot;Import Users and Roles into Application Security&quot;</div>
+            <div class="step-time" id="step-sync-time"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="stats hidden" id="summaryStats">
+        <div class="stat exported">
+          <div class="stat-value" id="statRoles">0</div>
+          <div class="stat-label" id="lblStatRoles">Roles</div>
+        </div>
+        <div class="stat imported">
+          <div class="stat-value" id="statHierarchies">0</div>
+          <div class="stat-label" id="lblStatHierarchies">Hierarquias</div>
+        </div>
+        <div class="stat errors">
+          <div class="stat-value" id="statErrors">0</div>
+          <div class="stat-label" id="lblStatErrors">Erros</div>
+        </div>
+        <div class="stat time">
+          <div class="stat-value" id="statTime">0s</div>
+          <div class="stat-label" id="lblStatTime">Tempo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG VIEWER -->
+  <div class="card log-card full-width">
+    <div class="card-header">
+      <div class="icon" style="background:var(--bg);">&#x1F4DD;</div>
+      <span id="txtLogTitle">Log Detalhado</span>
+      <div style="flex:1"></div>
+      <div class="log-controls">
+        <button id="btnCopyLogs" onclick="copyLogs()">Copiar</button>
+        <button id="btnDownloadLogs" onclick="downloadLogs()">Exportar</button>
+        <button id="btnClearLogs" onclick="clearLogs()">Limpar</button>
+      </div>
+    </div>
+    <div class="card-body" style="padding:12px;">
+      <div class="log-viewer" id="logViewer">
+        <div class="log-entry info">
+          <span class="log-time">[--:--:--]</span>
+          <span class="log-msg" id="txtLogWaiting">Aguardando in&iacute;cio da opera&ccedil;&atilde;o...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  mode: 'export',
+  offering: 'financials',
+  language: 'pt-BR',
+  theme: 'dark',
+  running: false,
+  cancelled: false,
+  importFile: null,
+  processId: null,
+  startTime: null,
+  logs: [],
+  stats: { roles: 0, hierarchies: 0, errors: 0 }
+};
+
+const OFFERINGS = {
+  financials: { code: 'FIN_FSCM_OFFERING', fa: 'ORA_ASE_USERS_AND_SECURITY' },
+  hcm:        { code: 'PER_WKF_DEV',       fa: 'ORA_ASE_USERS_AND_SECURITY' },
+  sales:      { code: 'ZBS_SALES',          fa: 'ORA_ASE_USERS_AND_SECURITY' },
+  scm:        { code: 'SCM_OFFERING',       fa: 'ORA_ASE_USERS_AND_SECURITY' }
+};
+
+const API_VERSION = '11.13.18.05';
+const MIN_REQUIRED_ROLES = [
+  {
+    code: 'ORA_ASM_FUNCTIONAL_SETUPS_USER_ABSTRACT',
+    name: 'Export Import Functional Setups User'
+  }
+];
+const OPTIONAL_ROLES = [
+  {
+    code: 'ORA_FND_IT_SECURITY_MANAGER_JOB',
+    name: 'IT Security Manager'
+  }
+];
+const STORAGE_LANG_KEY = 'oracleMigrationLang';
+const STORAGE_THEME_KEY = 'oracleMigrationTheme';
+
+const I18N = {
+  'pt-BR': {
+    locale: 'pt-BR',
+    pageTitle: 'OracleFusionRolesMigration',
+    headerTitle: 'OracleFusionRolesMigration',
+    headerSubtitle: 'Exportar e importar custom roles, hierarquias e privilégios entre ambientes',
+    accessInfoTitle: 'Acessos mínimos obrigatórios',
+    accessInfoDesc: 'Antes de iniciar, o sistema valida automaticamente os acessos e informa roles ausentes.',
+    accessStatusIdle: 'Validação de acesso pendente.',
+    accessStatusRunning: 'Validando acessos obrigatórios...',
+    accessStatusOk: '{env}: acessos mínimos validados.',
+    accessStatusBlocked: '{env}: acesso bloqueado. Revise as roles necessárias.',
+    sourceEnvLabel: 'Origem',
+    targetEnvLabel: 'Destino',
+    precheckSource: 'Pré-validação de acessos no ambiente de origem...',
+    precheckTarget: 'Pré-validação de acessos no ambiente de destino...',
+    precheckMissingRoles: '{env}: roles obrigatórias ausentes -> {roles}',
+    precheckWarnings: '{env}: avisos de validação -> {warnings}',
+    precheckBlockedReason: '{env}: bloqueio -> {reason}',
+    requiredRolesSummary: 'Roles mínimas para operação: {roles}',
+    optionalRolesSummary: 'Role opcional recomendada: {roles}',
+    optionalTag: 'opcional',
+    sourceCardTitle: 'Ambiente de Origem (Source)',
+    targetCardTitle: 'Ambiente de Destino (Target)',
+    labelEnvironmentUrl: 'URL do Ambiente',
+    labelUser: 'Usuário',
+    labelPassword: 'Senha',
+    btnTestConnection: 'Testar Conexão',
+    operationTitle: 'Operação',
+    modeExportTitle: 'Exportar Apenas',
+    modeExportDesc: 'Exporta roles do ambiente de origem e baixa o arquivo ZIP',
+    modeFullTitle: 'Exportar + Importar',
+    modeFullDesc: 'Exporta da origem e importa automaticamente no destino',
+    modeImportTitle: 'Importar Apenas',
+    modeImportDesc: 'Importa roles a partir de um arquivo ZIP previamente exportado',
+    labelImportFile: 'Arquivo ZIP de Roles Exportadas',
+    uploadHint: 'Clique ou arraste o arquivo ZIP aqui',
+    labelOffering: 'Offering / Módulo',
+    offeringFinancials: 'Financials',
+    offeringSales: 'Sales (CX)',
+    labelCustomOffering: 'Offering Code customizado (opcional)',
+    customOfferingPlaceholder: 'Deixe vazio para usar o offering selecionado acima',
+    btnExecute: 'Executar Migração',
+    btnCancel: 'Cancelar',
+    btnDiagnose: 'Diagnosticar',
+    statusTitle: 'Status da Operação',
+    stepValidateTitle: 'Validar Conexões',
+    stepValidateDetail: 'Verificar credenciais e conectividade com os ambientes',
+    stepExportTitle: 'Exportar Roles',
+    stepExportDetail: 'Iniciar processo de exportação via FSM REST API',
+    stepDownloadTitle: 'Download do Arquivo',
+    stepDownloadDetail: 'Baixar ZIP com CSVs de roles, hierarquias e privilégios',
+    stepImportTitle: 'Importar Roles',
+    stepImportDetail: 'Upload e importação no ambiente de destino',
+    stepSyncTitle: 'Sincronizar Segurança',
+    stepSyncDetail: 'Executar "Import Users and Roles into Application Security"',
+    statRoles: 'Roles',
+    statHierarchies: 'Hierarquias',
+    statErrors: 'Erros',
+    statTime: 'Tempo',
+    logTitle: 'Log Detalhado',
+    btnCopy: 'Copiar',
+    btnExport: 'Exportar',
+    btnClear: 'Limpar',
+    logWaiting: 'Aguardando início da operação...',
+    sourceRequired: 'Preencha as credenciais do ambiente de origem.',
+    targetRequired: 'Preencha as credenciais do ambiente de destino.',
+    importFileRequired: 'Selecione o arquivo ZIP para importação.',
+    opStart: '=== INÍCIO: {mode} ===',
+    opFailed: '=== OPERAÇÃO FALHOU ({elapsed}s) ===',
+    opSuccess: '=== OPERAÇÃO CONCLUÍDA COM SUCESSO ({elapsed}s) ===',
+    opRunningBanner: '⏳ Operação em andamento...',
+    opSuccessBanner: '✅ Operação concluída com sucesso em {elapsed}s',
+    opErrorBanner: '❌ Erro: {msg}',
+    modeExport: 'EXPORTAÇÃO',
+    modeImport: 'IMPORTAÇÃO',
+    modeFull: 'MIGRAÇÃO COMPLETA',
+    logOffering: 'Offering: {offeringCode} | FA: {faCode}',
+    step1: 'Passo 1: Validando conexões...',
+    testSource: 'Testando conexão com origem: {url}',
+    testTarget: 'Testando conexão com destino: {url}',
+    detectApiVersion: 'Detectando versão da API automaticamente...',
+    sourceOk: 'Conexão com origem OK - {message}',
+    targetOk: 'Conexão com destino OK - {message}',
+    detectedVersion: 'API Version detectada: {version}',
+    warningPrefix: 'AVISO: {warning}',
+    validatedOk: 'Conexões validadas com sucesso',
+    cancelledByUser: 'Operação cancelada pelo usuário',
+    step2: 'Passo 2: Iniciando exportação de roles...',
+    startExportDetail: 'Iniciando exportação via REST API...',
+    exportCreated: 'Processo de exportação criado. ProcessId: {processId}',
+    apiVersionUsed: 'API Version usada: {version}',
+    fullResponse: 'Resposta completa: {response}',
+    waitingProcess: 'Aguardando conclusão do processo...',
+    checkingStatus: 'Verificando status... (tentativa {n})',
+    statusValue: 'Status: {status}',
+    exportCompletedDetail: 'Exportação concluída - ProcessId: {processId}',
+    rolesExported: 'Roles exportadas: {count}',
+    exportFailed: 'Processo de exportação falhou: {error}',
+    statusRetry: 'Status ainda não disponível, tentando novamente...',
+    exportTimeout: 'Timeout: exportação não concluiu em 10 minutos',
+    step3: 'Passo 3: Baixando arquivo de exportação...',
+    startDownloadDetail: 'Baixando arquivo ZIP...',
+    downloadDone: 'Download concluído: {fileName} ({fileSize})',
+    downloadDoneDetail: 'Arquivo baixado: {fileName}',
+    browserSaved: 'Arquivo salvo no navegador: {fileName}',
+    importSkippedExportOnly: 'Não aplicável (modo exportar apenas)',
+    exportSkippedImportOnly: 'Não aplicável (modo importar apenas)',
+    downloadSkippedImportOnly: 'Usando arquivo local',
+    step4: 'Passo 4: Iniciando importação de roles...',
+    startImportDetail: 'Enviando arquivo e iniciando importação...',
+    importCreated: 'Processo de importação criado. ProcessId: {processId}',
+    checkingImportStatus: 'Verificando status da importação... (tentativa {n})',
+    importCompletedDetail: 'Importação concluída - ProcessId: {processId}',
+    importFailed: 'Processo de importação falhou: {error}',
+    importTimeout: 'Timeout: importação não concluiu em 10 minutos',
+    step5: 'Passo 5: Sincronização de segurança...',
+    startSyncDetail: 'Verificando sincronização de segurança...',
+    manualAction: 'AÇÃO MANUAL NECESSÁRIA: Execute "Import Users and Roles into Application Security"',
+    manualNav: 'Navegação: Navigator > Setup and Maintenance > Users and Security',
+    syncDoneDetail: 'Lembrete: execute manualmente o scheduled process de sincronização',
+    errorPrefix: 'ERRO: {message}',
+    cancelRequested: 'Cancelamento solicitado pelo usuário...',
+    fillSourceFirst: 'Preencha as credenciais de origem primeiro.',
+    diagStart: '=== DIAGNÓSTICO DO AMBIENTE ===',
+    diagApi: 'Consultando ESS jobs, permissões, FSM e ERP APIs...',
+    diagResult: '=== RESULTADO DO DIAGNÓSTICO ===',
+    diagEnd: '=== FIM DO DIAGNÓSTICO ===',
+    diagError: 'Erro no diagnóstico: {message}',
+    clearLogDone: 'Log limpo.',
+    copiedLogDone: 'Log copiado para clipboard.',
+    exportedLogDone: 'Log exportado como arquivo.',
+    fileRequired: 'Preencha todos os campos',
+    testing: 'Testando...',
+    testOk: 'Conectado',
+    testFail: 'Falha na conexão: {message}',
+    testingConnection: 'Testando conexão com {url}...',
+    nonJsonError: 'Resposta não-JSON do backend',
+    httpError: 'Erro HTTP',
+    backendRaw: '=== RESPOSTA ORACLE (raw) ===',
+    backendParsed: '=== RESPOSTA ORACLE ===',
+    responseKeys: 'Chaves na resposta: {keys}',
+    exportAttempts: '=== TENTATIVAS DE EXPORTAÇÃO ===',
+    exportAttemptItem: 'Tentativa #{attempt} | FA={faCode} | HTTP {status}',
+    tipPrefix: 'Dica: {hint}',
+    startedAt: 'Iniciado',
+    finishedAt: 'Finalizado',
+    themeTitle: 'Alternar tema',
+    lightTheme: 'Claro',
+    darkTheme: 'Escuro'
+  },
+  en: {
+    locale: 'en-US',
+    pageTitle: 'OracleFusionRolesMigration',
+    headerTitle: 'OracleFusionRolesMigration',
+    headerSubtitle: 'Export and import custom roles, hierarchies, and privileges across environments',
+    accessInfoTitle: 'Minimum required access',
+    accessInfoDesc: 'Before starting, the app validates required access and reports missing roles.',
+    accessStatusIdle: 'Access validation pending.',
+    accessStatusRunning: 'Validating required access...',
+    accessStatusOk: '{env}: minimum access validated.',
+    accessStatusBlocked: '{env}: access blocked. Review required roles.',
+    sourceEnvLabel: 'Source',
+    targetEnvLabel: 'Target',
+    precheckSource: 'Pre-validating source environment access...',
+    precheckTarget: 'Pre-validating target environment access...',
+    precheckMissingRoles: '{env}: missing required roles -> {roles}',
+    precheckWarnings: '{env}: validation warnings -> {warnings}',
+    precheckBlockedReason: '{env}: blocked -> {reason}',
+    requiredRolesSummary: 'Minimum required roles for this operation: {roles}',
+    optionalRolesSummary: 'Recommended optional role: {roles}',
+    optionalTag: 'optional',
+    sourceCardTitle: 'Source Environment',
+    targetCardTitle: 'Target Environment',
+    labelEnvironmentUrl: 'Environment URL',
+    labelUser: 'Username',
+    labelPassword: 'Password',
+    btnTestConnection: 'Test Connection',
+    operationTitle: 'Operation',
+    modeExportTitle: 'Export Only',
+    modeExportDesc: 'Export roles from source and download the ZIP file',
+    modeFullTitle: 'Export + Import',
+    modeFullDesc: 'Export from source and import automatically into target',
+    modeImportTitle: 'Import Only',
+    modeImportDesc: 'Import roles from a previously exported ZIP file',
+    labelImportFile: 'Exported Roles ZIP File',
+    uploadHint: 'Click or drag the ZIP file here',
+    labelOffering: 'Offering / Module',
+    offeringFinancials: 'Financials',
+    offeringSales: 'Sales (CX)',
+    labelCustomOffering: 'Custom Offering Code (optional)',
+    customOfferingPlaceholder: 'Leave empty to use the selected offering code',
+    btnExecute: 'Run Migration',
+    btnCancel: 'Cancel',
+    btnDiagnose: 'Diagnose',
+    statusTitle: 'Operation Status',
+    stepValidateTitle: 'Validate Connections',
+    stepValidateDetail: 'Validate credentials and connectivity for both environments',
+    stepExportTitle: 'Export Roles',
+    stepExportDetail: 'Start the export process through FSM REST API',
+    stepDownloadTitle: 'Download File',
+    stepDownloadDetail: 'Download ZIP with role, hierarchy, and privilege CSVs',
+    stepImportTitle: 'Import Roles',
+    stepImportDetail: 'Upload file and import into target environment',
+    stepSyncTitle: 'Sync Security',
+    stepSyncDetail: 'Run "Import Users and Roles into Application Security"',
+    statRoles: 'Roles',
+    statHierarchies: 'Hierarchies',
+    statErrors: 'Errors',
+    statTime: 'Time',
+    logTitle: 'Detailed Log',
+    btnCopy: 'Copy',
+    btnExport: 'Export',
+    btnClear: 'Clear',
+    logWaiting: 'Waiting for operation start...',
+    sourceRequired: 'Fill in source environment credentials.',
+    targetRequired: 'Fill in target environment credentials.',
+    importFileRequired: 'Select the ZIP file for import.',
+    opStart: '=== START: {mode} ===',
+    opFailed: '=== OPERATION FAILED ({elapsed}s) ===',
+    opSuccess: '=== OPERATION COMPLETED SUCCESSFULLY ({elapsed}s) ===',
+    opRunningBanner: '⏳ Operation in progress...',
+    opSuccessBanner: '✅ Operation completed successfully in {elapsed}s',
+    opErrorBanner: '❌ Error: {msg}',
+    modeExport: 'EXPORT',
+    modeImport: 'IMPORT',
+    modeFull: 'FULL MIGRATION',
+    logOffering: 'Offering: {offeringCode} | FA: {faCode}',
+    step1: 'Step 1: Validating connections...',
+    testSource: 'Testing source connection: {url}',
+    testTarget: 'Testing target connection: {url}',
+    detectApiVersion: 'Automatically detecting API version...',
+    sourceOk: 'Source connection OK - {message}',
+    targetOk: 'Target connection OK - {message}',
+    detectedVersion: 'Detected API version: {version}',
+    warningPrefix: 'WARNING: {warning}',
+    validatedOk: 'Connections validated successfully',
+    cancelledByUser: 'Operation canceled by user',
+    step2: 'Step 2: Starting role export...',
+    startExportDetail: 'Starting export via REST API...',
+    exportCreated: 'Export process created. ProcessId: {processId}',
+    apiVersionUsed: 'API version used: {version}',
+    fullResponse: 'Full response: {response}',
+    waitingProcess: 'Waiting for process completion...',
+    checkingStatus: 'Checking status... (attempt {n})',
+    statusValue: 'Status: {status}',
+    exportCompletedDetail: 'Export completed - ProcessId: {processId}',
+    rolesExported: 'Exported roles: {count}',
+    exportFailed: 'Export process failed: {error}',
+    statusRetry: 'Status not available yet, retrying...',
+    exportTimeout: 'Timeout: export did not complete within 10 minutes',
+    step3: 'Step 3: Downloading export file...',
+    startDownloadDetail: 'Downloading ZIP file...',
+    downloadDone: 'Download complete: {fileName} ({fileSize})',
+    downloadDoneDetail: 'File downloaded: {fileName}',
+    browserSaved: 'File saved in browser: {fileName}',
+    importSkippedExportOnly: 'Not applicable (export-only mode)',
+    exportSkippedImportOnly: 'Not applicable (import-only mode)',
+    downloadSkippedImportOnly: 'Using local file',
+    step4: 'Step 4: Starting role import...',
+    startImportDetail: 'Uploading file and starting import...',
+    importCreated: 'Import process created. ProcessId: {processId}',
+    checkingImportStatus: 'Checking import status... (attempt {n})',
+    importCompletedDetail: 'Import completed - ProcessId: {processId}',
+    importFailed: 'Import process failed: {error}',
+    importTimeout: 'Timeout: import did not complete within 10 minutes',
+    step5: 'Step 5: Security sync...',
+    startSyncDetail: 'Checking security sync...',
+    manualAction: 'MANUAL ACTION REQUIRED: Run "Import Users and Roles into Application Security"',
+    manualNav: 'Navigation: Navigator > Setup and Maintenance > Users and Security',
+    syncDoneDetail: 'Reminder: run the security sync scheduled process manually',
+    errorPrefix: 'ERROR: {message}',
+    cancelRequested: 'Cancellation requested by user...',
+    fillSourceFirst: 'Fill source credentials first.',
+    diagStart: '=== ENVIRONMENT DIAGNOSTIC ===',
+    diagApi: 'Querying ESS jobs, permissions, FSM and ERP APIs...',
+    diagResult: '=== DIAGNOSTIC RESULT ===',
+    diagEnd: '=== END OF DIAGNOSTIC ===',
+    diagError: 'Diagnostic error: {message}',
+    clearLogDone: 'Log cleared.',
+    copiedLogDone: 'Log copied to clipboard.',
+    exportedLogDone: 'Log exported to file.',
+    fileRequired: 'Fill all fields',
+    testing: 'Testing...',
+    testOk: 'Connected',
+    testFail: 'Connection failed: {message}',
+    testingConnection: 'Testing connection to {url}...',
+    nonJsonError: 'Non-JSON response from backend',
+    httpError: 'HTTP Error',
+    backendRaw: '=== ORACLE RESPONSE (raw) ===',
+    backendParsed: '=== ORACLE RESPONSE ===',
+    responseKeys: 'Response keys: {keys}',
+    exportAttempts: '=== EXPORT ATTEMPTS ===',
+    exportAttemptItem: 'Attempt #{attempt} | FA={faCode} | HTTP {status}',
+    tipPrefix: 'Tip: {hint}',
+    startedAt: 'Started',
+    finishedAt: 'Finished',
+    themeTitle: 'Toggle theme',
+    lightTheme: 'Light',
+    darkTheme: 'Dark'
+  },
+  es: {
+    locale: 'es-ES',
+    pageTitle: 'OracleFusionRolesMigration',
+    headerTitle: 'OracleFusionRolesMigration',
+    headerSubtitle: 'Exportar e importar roles personalizados, jerarquías y privilegios entre ambientes',
+    accessInfoTitle: 'Accesos mínimos requeridos',
+    accessInfoDesc: 'Antes de iniciar, la app valida accesos requeridos e informa roles faltantes.',
+    accessStatusIdle: 'Validación de acceso pendiente.',
+    accessStatusRunning: 'Validando accesos requeridos...',
+    accessStatusOk: '{env}: accesos mínimos validados.',
+    accessStatusBlocked: '{env}: acceso bloqueado. Revisa los roles requeridos.',
+    sourceEnvLabel: 'Origen',
+    targetEnvLabel: 'Destino',
+    precheckSource: 'Prevalidando accesos del ambiente origen...',
+    precheckTarget: 'Prevalidando accesos del ambiente destino...',
+    precheckMissingRoles: '{env}: roles requeridos faltantes -> {roles}',
+    precheckWarnings: '{env}: avisos de validación -> {warnings}',
+    precheckBlockedReason: '{env}: bloqueo -> {reason}',
+    requiredRolesSummary: 'Roles mínimos para esta operación: {roles}',
+    optionalRolesSummary: 'Rol opcional recomendado: {roles}',
+    optionalTag: 'opcional',
+    sourceCardTitle: 'Ambiente de Origen',
+    targetCardTitle: 'Ambiente de Destino',
+    labelEnvironmentUrl: 'URL del Ambiente',
+    labelUser: 'Usuario',
+    labelPassword: 'Contraseña',
+    btnTestConnection: 'Probar Conexión',
+    operationTitle: 'Operación',
+    modeExportTitle: 'Solo Exportar',
+    modeExportDesc: 'Exporta roles del origen y descarga el archivo ZIP',
+    modeFullTitle: 'Exportar + Importar',
+    modeFullDesc: 'Exporta del origen e importa automáticamente en destino',
+    modeImportTitle: 'Solo Importar',
+    modeImportDesc: 'Importa roles desde un archivo ZIP exportado previamente',
+    labelImportFile: 'Archivo ZIP de Roles Exportados',
+    uploadHint: 'Haz clic o arrastra el archivo ZIP aquí',
+    labelOffering: 'Offering / Módulo',
+    offeringFinancials: 'Financials',
+    offeringSales: 'Sales (CX)',
+    labelCustomOffering: 'Código de Offering personalizado (opcional)',
+    customOfferingPlaceholder: 'Déjalo vacío para usar el offering seleccionado',
+    btnExecute: 'Ejecutar Migración',
+    btnCancel: 'Cancelar',
+    btnDiagnose: 'Diagnosticar',
+    statusTitle: 'Estado de la Operación',
+    stepValidateTitle: 'Validar Conexiones',
+    stepValidateDetail: 'Validar credenciales y conectividad de ambos ambientes',
+    stepExportTitle: 'Exportar Roles',
+    stepExportDetail: 'Iniciar exportación por FSM REST API',
+    stepDownloadTitle: 'Descargar Archivo',
+    stepDownloadDetail: 'Descargar ZIP con CSV de roles, jerarquías y privilegios',
+    stepImportTitle: 'Importar Roles',
+    stepImportDetail: 'Subir archivo e importar en el ambiente destino',
+    stepSyncTitle: 'Sincronizar Seguridad',
+    stepSyncDetail: 'Ejecutar "Import Users and Roles into Application Security"',
+    statRoles: 'Roles',
+    statHierarchies: 'Jerarquías',
+    statErrors: 'Errores',
+    statTime: 'Tiempo',
+    logTitle: 'Log Detallado',
+    btnCopy: 'Copiar',
+    btnExport: 'Exportar',
+    btnClear: 'Limpiar',
+    logWaiting: 'Esperando inicio de la operación...',
+    sourceRequired: 'Completa las credenciales del ambiente de origen.',
+    targetRequired: 'Completa las credenciales del ambiente de destino.',
+    importFileRequired: 'Selecciona el archivo ZIP para importar.',
+    opStart: '=== INICIO: {mode} ===',
+    opFailed: '=== OPERACIÓN FALLIDA ({elapsed}s) ===',
+    opSuccess: '=== OPERACIÓN COMPLETADA ({elapsed}s) ===',
+    opRunningBanner: '⏳ Operación en curso...',
+    opSuccessBanner: '✅ Operación completada con éxito en {elapsed}s',
+    opErrorBanner: '❌ Error: {msg}',
+    modeExport: 'EXPORTACIÓN',
+    modeImport: 'IMPORTACIÓN',
+    modeFull: 'MIGRACIÓN COMPLETA',
+    logOffering: 'Offering: {offeringCode} | FA: {faCode}',
+    step1: 'Paso 1: Validando conexiones...',
+    testSource: 'Probando conexión de origen: {url}',
+    testTarget: 'Probando conexión de destino: {url}',
+    detectApiVersion: 'Detectando versión de API automáticamente...',
+    sourceOk: 'Conexión de origen OK - {message}',
+    targetOk: 'Conexión de destino OK - {message}',
+    detectedVersion: 'Versión de API detectada: {version}',
+    warningPrefix: 'AVISO: {warning}',
+    validatedOk: 'Conexiones validadas con éxito',
+    cancelledByUser: 'Operación cancelada por el usuario',
+    step2: 'Paso 2: Iniciando exportación de roles...',
+    startExportDetail: 'Iniciando exportación por REST API...',
+    exportCreated: 'Proceso de exportación creado. ProcessId: {processId}',
+    apiVersionUsed: 'Versión de API usada: {version}',
+    fullResponse: 'Respuesta completa: {response}',
+    waitingProcess: 'Esperando finalización del proceso...',
+    checkingStatus: 'Verificando estado... (intento {n})',
+    statusValue: 'Estado: {status}',
+    exportCompletedDetail: 'Exportación completada - ProcessId: {processId}',
+    rolesExported: 'Roles exportados: {count}',
+    exportFailed: 'Falló la exportación: {error}',
+    statusRetry: 'Estado aún no disponible, reintentando...',
+    exportTimeout: 'Timeout: la exportación no finalizó en 10 minutos',
+    step3: 'Paso 3: Descargando archivo exportado...',
+    startDownloadDetail: 'Descargando archivo ZIP...',
+    downloadDone: 'Descarga completa: {fileName} ({fileSize})',
+    downloadDoneDetail: 'Archivo descargado: {fileName}',
+    browserSaved: 'Archivo guardado en el navegador: {fileName}',
+    importSkippedExportOnly: 'No aplica (modo solo exportar)',
+    exportSkippedImportOnly: 'No aplica (modo solo importar)',
+    downloadSkippedImportOnly: 'Usando archivo local',
+    step4: 'Paso 4: Iniciando importación de roles...',
+    startImportDetail: 'Subiendo archivo e iniciando importación...',
+    importCreated: 'Proceso de importación creado. ProcessId: {processId}',
+    checkingImportStatus: 'Verificando estado de importación... (intento {n})',
+    importCompletedDetail: 'Importación completada - ProcessId: {processId}',
+    importFailed: 'Falló la importación: {error}',
+    importTimeout: 'Timeout: la importación no finalizó en 10 minutos',
+    step5: 'Paso 5: Sincronización de seguridad...',
+    startSyncDetail: 'Verificando sincronización de seguridad...',
+    manualAction: 'ACCIÓN MANUAL REQUERIDA: Ejecuta "Import Users and Roles into Application Security"',
+    manualNav: 'Navegación: Navigator > Setup and Maintenance > Users and Security',
+    syncDoneDetail: 'Recordatorio: ejecuta manualmente el proceso de sincronización',
+    errorPrefix: 'ERROR: {message}',
+    cancelRequested: 'Cancelación solicitada por el usuario...',
+    fillSourceFirst: 'Completa primero las credenciales de origen.',
+    diagStart: '=== DIAGNÓSTICO DEL AMBIENTE ===',
+    diagApi: 'Consultando ESS jobs, permisos, FSM y APIs ERP...',
+    diagResult: '=== RESULTADO DEL DIAGNÓSTICO ===',
+    diagEnd: '=== FIN DEL DIAGNÓSTICO ===',
+    diagError: 'Error en diagnóstico: {message}',
+    clearLogDone: 'Log limpiado.',
+    copiedLogDone: 'Log copiado al portapapeles.',
+    exportedLogDone: 'Log exportado a archivo.',
+    fileRequired: 'Completa todos los campos',
+    testing: 'Probando...',
+    testOk: 'Conectado',
+    testFail: 'Error de conexión: {message}',
+    testingConnection: 'Probando conexión con {url}...',
+    nonJsonError: 'Respuesta no-JSON del backend',
+    httpError: 'Error HTTP',
+    backendRaw: '=== RESPUESTA ORACLE (raw) ===',
+    backendParsed: '=== RESPUESTA ORACLE ===',
+    responseKeys: 'Claves de respuesta: {keys}',
+    exportAttempts: '=== INTENTOS DE EXPORTACIÓN ===',
+    exportAttemptItem: 'Intento #{attempt} | FA={faCode} | HTTP {status}',
+    tipPrefix: 'Consejo: {hint}',
+    startedAt: 'Iniciado',
+    finishedAt: 'Finalizado',
+    themeTitle: 'Cambiar tema',
+    lightTheme: 'Claro',
+    darkTheme: 'Oscuro'
+  }
+};
+
+function t(key) {
+  const dict = I18N[state.language] || I18N['pt-BR'];
+  return dict[key] || I18N['pt-BR'][key] || key;
+}
+
+function tf(key, vars = {}) {
+  return t(key).replace(/\{(\w+)\}/g, (_, name) => (vars[name] ?? `{${name}}`));
+}
+
+function setNodeText(id, text) {
+  const node = document.getElementById(id);
+  if (node) node.textContent = text;
+}
+
+function getModeLabel(mode) {
+  if (mode === 'import') return t('modeImport');
+  if (mode === 'full') return t('modeFull');
+  return t('modeExport');
+}
+
+function updateThemeIcon() {
+  const btn = document.getElementById('btnTheme');
+  if (!btn) return;
+  const isDark = state.theme === 'dark';
+  btn.innerHTML = isDark ? '&#x1F319;' : '&#x2600;';
+  btn.title = t('themeTitle') + ' (' + (isDark ? t('darkTheme') : t('lightTheme')) + ')';
+}
+
+function renderRequiredRolesList() {
+  const list = document.getElementById('requiredRolesList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  MIN_REQUIRED_ROLES.forEach(role => {
+    const li = document.createElement('li');
+    li.innerHTML = '<code>' + escapeHtml(role.code) + '</code> - ' + escapeHtml(role.name);
+    list.appendChild(li);
+  });
+
+  OPTIONAL_ROLES.forEach(role => {
+    const li = document.createElement('li');
+    li.innerHTML = '<code>' + escapeHtml(role.code) + '</code> - ' + escapeHtml(role.name) + ' (' + escapeHtml(t('optionalTag')) + ')';
+    list.appendChild(li);
+  });
+}
+
+function setAccessResult(message, level) {
+  const el = document.getElementById('accessCheckResult');
+  if (!el) return;
+  el.className = 'access-result ' + (level || 'warn');
+  el.textContent = message;
+}
+
+function setTheme(theme) {
+  state.theme = theme === 'light' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', state.theme);
+  localStorage.setItem(STORAGE_THEME_KEY, state.theme);
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  setTheme(state.theme === 'dark' ? 'light' : 'dark');
+}
+
+function applyLanguage() {
+  const dict = I18N[state.language] || I18N['pt-BR'];
+  document.documentElement.lang = state.language;
+  document.title = dict.pageTitle;
+
+  setNodeText('txtHeaderTitle', dict.headerTitle);
+  setNodeText('txtHeaderSubtitle', dict.headerSubtitle);
+  setNodeText('txtAccessInfoTitle', dict.accessInfoTitle);
+  setNodeText('txtAccessInfoDesc', dict.accessInfoDesc);
+  setNodeText('txtSourceCardTitle', dict.sourceCardTitle);
+  setNodeText('txtTargetCardTitle', dict.targetCardTitle);
+  setNodeText('lblSourceUrl', dict.labelEnvironmentUrl);
+  setNodeText('lblTargetUrl', dict.labelEnvironmentUrl);
+  setNodeText('lblSourceUser', dict.labelUser);
+  setNodeText('lblTargetUser', dict.labelUser);
+  setNodeText('lblSourcePass', dict.labelPassword);
+  setNodeText('lblTargetPass', dict.labelPassword);
+  setNodeText('txtBtnTestSource', dict.btnTestConnection);
+  setNodeText('txtBtnTestTarget', dict.btnTestConnection);
+  setNodeText('txtOperationTitle', dict.operationTitle);
+  setNodeText('txtModeExportTitle', dict.modeExportTitle);
+  setNodeText('txtModeExportDesc', dict.modeExportDesc);
+  setNodeText('txtModeFullTitle', dict.modeFullTitle);
+  setNodeText('txtModeFullDesc', dict.modeFullDesc);
+  setNodeText('txtModeImportTitle', dict.modeImportTitle);
+  setNodeText('txtModeImportDesc', dict.modeImportDesc);
+  setNodeText('lblImportFile', dict.labelImportFile);
+  setNodeText('txtUploadHint', dict.uploadHint);
+  setNodeText('lblOffering', dict.labelOffering);
+  setNodeText('txtOfferingFinancials', dict.offeringFinancials);
+  setNodeText('txtOfferingSales', dict.offeringSales);
+  setNodeText('lblCustomOffering', dict.labelCustomOffering);
+  setNodeText('txtBtnExecute', dict.btnExecute);
+  setNodeText('txtBtnCancel', dict.btnCancel);
+  setNodeText('txtBtnDiag', dict.btnDiagnose);
+  setNodeText('txtStatusTitle', dict.statusTitle);
+  setNodeText('txtStepValidateTitle', dict.stepValidateTitle);
+  setNodeText('txtStepValidateDetail', dict.stepValidateDetail);
+  setNodeText('txtStepExportTitle', dict.stepExportTitle);
+  setNodeText('txtStepExportDetail', dict.stepExportDetail);
+  setNodeText('txtStepDownloadTitle', dict.stepDownloadTitle);
+  setNodeText('txtStepDownloadDetail', dict.stepDownloadDetail);
+  setNodeText('txtStepImportTitle', dict.stepImportTitle);
+  setNodeText('txtStepImportDetail', dict.stepImportDetail);
+  setNodeText('txtStepSyncTitle', dict.stepSyncTitle);
+  setNodeText('txtStepSyncDetail', dict.stepSyncDetail);
+  setNodeText('lblStatRoles', dict.statRoles);
+  setNodeText('lblStatHierarchies', dict.statHierarchies);
+  setNodeText('lblStatErrors', dict.statErrors);
+  setNodeText('lblStatTime', dict.statTime);
+  setNodeText('txtLogTitle', dict.logTitle);
+  setNodeText('btnCopyLogs', dict.btnCopy);
+  setNodeText('btnDownloadLogs', dict.btnExport);
+  setNodeText('btnClearLogs', dict.btnClear);
+  if (!state.logs.length) setNodeText('txtLogWaiting', dict.logWaiting);
+
+  document.getElementById('srcUrl').placeholder = 'https://dev-acme-fa.example.oraclecloud.com';
+  document.getElementById('tgtUrl').placeholder = 'https://uat-acme-fa.example.oraclecloud.com';
+  document.getElementById('srcUser').placeholder = 'svc_integration_demo';
+  document.getElementById('tgtUser').placeholder = 'svc_integration_demo';
+  document.getElementById('srcPass').placeholder = '********';
+  document.getElementById('tgtPass').placeholder = '********';
+  document.getElementById('customOfferingCode').placeholder = dict.customOfferingPlaceholder;
+
+  ['pt-BR', 'en', 'es'].forEach(code => {
+    const btn = document.getElementById('lang-' + code);
+    if (btn) btn.classList.toggle('active', code === state.language);
+  });
+  renderRequiredRolesList();
+  setAccessResult(t('accessStatusIdle'), 'warn');
+  updateThemeIcon();
+}
+
+function setLanguage(lang) {
+  if (!I18N[lang]) return;
+  state.language = lang;
+  localStorage.setItem(STORAGE_LANG_KEY, lang);
+  applyLanguage();
+}
+
+function loadUserPreferences() {
+  const savedLang = localStorage.getItem(STORAGE_LANG_KEY);
+  const savedTheme = localStorage.getItem(STORAGE_THEME_KEY);
+  if (savedLang && I18N[savedLang]) state.language = savedLang;
+  if (savedTheme === 'light' || savedTheme === 'dark') state.theme = savedTheme;
+  setTheme(state.theme);
+  applyLanguage();
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function togglePass(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function selectMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll('.op-mode').forEach(el => el.classList.remove('active'));
+  document.getElementById('mode-' + mode).classList.add('active');
+  const importSection = document.getElementById('importFileSection');
+  importSection.classList.toggle('hidden', mode === 'export');
+  resetSteps();
+}
+
+function selectOffering(key, el) {
+  state.offering = key;
+  document.querySelectorAll('.offering-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) {
+    state.importFile = file;
+    const zone = document.getElementById('fileDropZone');
+    zone.classList.add('has-file');
+    const nameEl = document.getElementById('selectedFileName');
+    nameEl.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+    nameEl.classList.remove('hidden');
+  }
+}
+
+function setStepState(stepId, status, detail) {
+  const el = document.getElementById('step-' + stepId);
+  el.className = 'step ' + status;
+  if (detail) el.querySelector('.step-detail').textContent = detail;
+  if (status === 'running') {
+    el.querySelector('.step-time').textContent = t('startedAt') + ': ' + now();
+  } else if (status === 'success' || status === 'error') {
+    const timeEl = el.querySelector('.step-time');
+    timeEl.textContent = (timeEl.textContent || '') + ' | ' + t('finishedAt') + ': ' + now();
+  }
+}
+
+function showProgress(stepId, show, indeterminate) {
+  const bar = document.getElementById('step-' + stepId + '-progress');
+  if (!bar) return;
+  bar.classList.toggle('hidden', !show);
+  const fill = bar.querySelector('.progress-fill');
+  if (indeterminate) fill.classList.add('indeterminate');
+  else fill.classList.remove('indeterminate');
+}
+
+function setProgress(stepId, pct, cls) {
+  const bar = document.getElementById('step-' + stepId + '-progress');
+  if (!bar) return;
+  const fill = bar.querySelector('.progress-fill');
+  fill.classList.remove('indeterminate');
+  fill.style.width = pct + '%';
+  if (cls) { fill.className = 'progress-fill ' + cls; }
+}
+
+function resetSteps() {
+  const stepDefaultDetails = {
+    validate: t('stepValidateDetail'),
+    export: t('stepExportDetail'),
+    download: t('stepDownloadDetail'),
+    import: t('stepImportDetail'),
+    sync: t('stepSyncDetail')
+  };
+  ['validate','export','download','import','sync'].forEach(s => {
+    const el = document.getElementById('step-' + s);
+    el.className = 'step pending';
+    el.querySelector('.step-detail').textContent = stepDefaultDetails[s] || el.querySelector('.step-detail').textContent;
+    el.querySelector('.step-time').textContent = '';
+    const bar = document.getElementById('step-' + s + '-progress');
+    if (bar) { bar.classList.add('hidden'); bar.querySelector('.progress-fill').style.width = '0%'; }
+  });
+  document.getElementById('summaryStats').classList.add('hidden');
+  document.getElementById('statusBanner').classList.add('hidden');
+}
+
+function showBanner(type, msg) {
+  const b = document.getElementById('statusBanner');
+  b.className = 'banner ' + type + '-banner';
+  b.innerHTML = msg;
+  b.classList.remove('hidden');
+}
+
+function now() {
+  const locale = (I18N[state.language] && I18N[state.language].locale) || 'pt-BR';
+  return new Date().toLocaleTimeString(locale, { hour12: false });
+}
+
+// ============================================================
+// LOGGING
+// ============================================================
+function log(msg, level = 'info') {
+  const viewer = document.getElementById('logViewer');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry ' + level;
+  const time = now();
+  entry.innerHTML = '<span class="log-time">[' + time + ']</span><span class="log-msg">' + escapeHtml(msg) + '</span>';
+  viewer.appendChild(entry);
+  viewer.scrollTop = viewer.scrollHeight;
+  state.logs.push({ time, level, msg });
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function clearLogs() {
+  const viewer = document.getElementById('logViewer');
+  viewer.innerHTML = '';
+  state.logs = [];
+  log(t('clearLogDone'), 'info');
+}
+
+function copyLogs() {
+  const text = state.logs.map(l => '[' + l.time + '] [' + l.level.toUpperCase() + '] ' + l.msg).join('\n');
+  navigator.clipboard.writeText(text).then(() => log(t('copiedLogDone'), 'success'));
+}
+
+function downloadLogs() {
+  const text = state.logs.map(l => '[' + l.time + '] [' + l.level.toUpperCase() + '] ' + l.msg).join('\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'oracle_migration_log_' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+  log(t('exportedLogDone'), 'success');
+}
+
+// ============================================================
+// API CALLS (via backend proxy)
+// ============================================================
+function getBackendUrl() {
+  // Flask backend usually runs on same origin.
+  // If page is opened as file://, origin becomes "null", so use localhost fallback.
+  if (!window.location.origin || window.location.origin === 'null') {
+    return 'http://127.0.0.1:5050';
+  }
+  return window.location.origin;
+}
+
+async function apiCall(endpoint, options = {}) {
+  const url = getBackendUrl() + '/api' + endpoint;
+  const defaultHeaders = { 'Content-Type': 'application/json' };
+  const response = await fetch(url, {
+    ...options,
+    headers: { ...defaultHeaders, ...options.headers }
+  });
+  const rawBody = await response.text();
+  let data = {};
+  try {
+    data = rawBody ? JSON.parse(rawBody) : {};
+  } catch (e) {
+    data = {
+      error: t('nonJsonError'),
+      responseText: String(rawBody || '').substring(0, 2000)
+    };
+  }
+  if (!response.ok) {
+    let errorMsg = data.error || data.message || (t('httpError') + ' ' + response.status);
+    if (data.detail) {
+      const detail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail).substring(0, 300);
+      errorMsg += ' | Detalhe: ' + detail;
+    }
+    if (data.apiVersion) errorMsg += ' | API: v' + data.apiVersion;
+    if (data.path) errorMsg += ' | Path: ' + data.path;
+    // Log full Oracle response for debugging
+    if (data.responseText) {
+      log(t('backendRaw'), 'warning');
+      log(data.responseText, 'warning');
+    } else if (data.response) {
+      log(t('backendParsed'), 'warning');
+      const respStr = typeof data.response === 'string' ? data.response : JSON.stringify(data.response, null, 2);
+      log(respStr.substring(0, 1500), 'warning');
+    }
+    if (data.keys) {
+      log(tf('responseKeys', { keys: JSON.stringify(data.keys) }), 'warning');
+    }
+    if (Array.isArray(data.attempts) && data.attempts.length) {
+      log(t('exportAttempts'), 'warning');
+      data.attempts.forEach(a => {
+        log(tf('exportAttemptItem', { attempt: a.attempt, faCode: a.faCode, status: a.status }), 'warning');
+        if (a.response) log(String(a.response).substring(0, 600), 'warning');
+      });
+    }
+    if (data.hint) {
+      log(tf('tipPrefix', { hint: data.hint }), 'info');
+    }
+    throw new Error(errorMsg);
+  }
+  return data;
+}
+
+async function validateMinimumAccess(envLabel, url, username, password, mode, offeringCode) {
+  let result;
+  try {
+    result = await apiCall('/validate-access', {
+      method: 'POST',
+      body: JSON.stringify({ url, username, password, mode, offeringCode })
+    });
+  } catch (err) {
+    const msg = String(err && err.message ? err.message : err);
+    // Compatibility mode: allow older backend versions without /api/validate-access.
+    if (msg.includes('Method Not Allowed') || msg.includes('Non-JSON response from backend')) {
+      const warning = envLabel + ': /api/validate-access not available on backend. Continuing without pre-check.';
+      log(warning, 'warning');
+      setAccessResult(warning, 'warn');
+      return { canProceed: true, skipped: true };
+    }
+    throw err;
+  }
+
+  const requiredRoles = (result.requiredRoles || []).map(r => r.code + ' (' + r.name + ')').join(', ') || '-';
+  log(tf('requiredRolesSummary', { roles: requiredRoles }), 'info');
+
+  const optionalRoles = (result.optionalRoles || []).map(r => r.code + ' (' + r.name + ')').join(', ');
+  if (optionalRoles) log(tf('optionalRolesSummary', { roles: optionalRoles }), 'info');
+
+  if (Array.isArray(result.warnings) && result.warnings.length) {
+    log(tf('precheckWarnings', { env: envLabel, warnings: result.warnings.join(' | ') }), 'warning');
+  }
+
+  if (Array.isArray(result.missingRoles) && result.missingRoles.length) {
+    const missing = result.missingRoles.map(r => r.code + ' (' + r.name + ')').join(', ');
+    log(tf('precheckMissingRoles', { env: envLabel, roles: missing }), 'error');
+  }
+
+  if (!result.canProceed) {
+    const reason = (result.blockingReasons || []).join(' | ') || result.message || 'blocked';
+    log(tf('precheckBlockedReason', { env: envLabel, reason }), 'error');
+    setAccessResult(tf('accessStatusBlocked', { env: envLabel }), 'err');
+    throw new Error(reason);
+  }
+
+  setAccessResult(tf('accessStatusOk', { env: envLabel }), 'ok');
+  return result;
+}
+
+// ============================================================
+// TEST CONNECTION
+// ============================================================
+async function testConnection(prefix) {
+  const url = document.getElementById(prefix + 'Url').value.trim();
+  const user = document.getElementById(prefix + 'User').value.trim();
+  const pass = document.getElementById(prefix + 'Pass').value;
+  const resultEl = document.getElementById(prefix + 'TestResult');
+  const btn = event.target.closest('.test-btn');
+
+  if (!url || !user || !pass) {
+    resultEl.className = 'test-result fail';
+    resultEl.innerHTML = '&#x274C; ' + t('fileRequired');
+    resultEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.classList.add('testing');
+  btn.innerHTML = '<span>&#x23F3;</span> ' + t('testing');
+  resultEl.classList.add('hidden');
+  log(tf('testingConnection', { url }), 'api');
+
+  try {
+    const data = await apiCall('/test-connection', {
+      method: 'POST',
+      body: JSON.stringify({ url, username: user, password: pass })
+    });
+
+    resultEl.className = 'test-result ok';
+    const versionInfo = data.apiVersion ? ' (API v' + data.apiVersion + ')' : '';
+    resultEl.innerHTML = '&#x2705; ' + t('testOk') + versionInfo;
+    log(t('testOk') + ': ' + url + versionInfo, 'success');
+    if (data.warning) log(tf('warningPrefix', { warning: data.warning }), 'warning');
+  } catch (err) {
+    resultEl.className = 'test-result fail';
+    resultEl.innerHTML = '&#x274C; ' + err.message;
+    log(tf('testFail', { message: err.message }), 'error');
+  } finally {
+    btn.classList.remove('testing');
+    btn.innerHTML = '<span>&#9889;</span> ' + t('btnTestConnection');
+    resultEl.classList.remove('hidden');
+  }
+}
+
+// ============================================================
+// MAIN EXECUTION
+// ============================================================
+async function executeOperation() {
+  if (state.running) return;
+
+  // Gather inputs
+  const srcUrl  = document.getElementById('srcUrl').value.trim();
+  const srcUser = document.getElementById('srcUser').value.trim();
+  const srcPass = document.getElementById('srcPass').value;
+  const tgtUrl  = document.getElementById('tgtUrl').value.trim();
+  const tgtUser = document.getElementById('tgtUser').value.trim();
+  const tgtPass = document.getElementById('tgtPass').value;
+  const customCode = document.getElementById('customOfferingCode').value.trim();
+
+  const offering = OFFERINGS[state.offering];
+  const offeringCode = customCode || offering.code;
+  const faCode = offering.fa;
+
+  // Validation
+  if (state.mode !== 'import' && (!srcUrl || !srcUser || !srcPass)) {
+    showBanner('err', '&#x26A0; ' + t('sourceRequired'));
+    return;
+  }
+  if (state.mode !== 'export' && (!tgtUrl || !tgtUser || !tgtPass)) {
+    showBanner('err', '&#x26A0; ' + t('targetRequired'));
+    return;
+  }
+  if (state.mode === 'import' && !state.importFile) {
+    showBanner('err', '&#x26A0; ' + t('importFileRequired'));
+    return;
+  }
+
+  // Start
+  state.running = true;
+  state.cancelled = false;
+  state.startTime = Date.now();
+  state.stats = { roles: 0, hierarchies: 0, errors: 0 };
+  document.getElementById('btnExecute').disabled = true;
+  document.getElementById('btnCancel').disabled = false;
+  resetSteps();
+
+  const modeLabel = getModeLabel(state.mode);
+  log(tf('opStart', { mode: modeLabel }), 'info');
+  log(tf('logOffering', { offeringCode, faCode }), 'info');
+  showBanner('info', t('opRunningBanner'));
+
+  try {
+    // ---- Step 1: Validate ----
+    setStepState('validate', 'running', t('stepValidateDetail'));
+    log(t('step1'), 'info');
+
+    // Access pre-check before connection tests
+    setAccessResult(t('accessStatusRunning'), 'warn');
+    if (state.mode !== 'import') {
+      log(t('precheckSource'), 'info');
+      await validateMinimumAccess(
+        t('sourceEnvLabel'),
+        srcUrl, srcUser, srcPass,
+        'export',
+        offeringCode
+      );
+    }
+    if (state.mode !== 'export') {
+      log(t('precheckTarget'), 'info');
+      await validateMinimumAccess(
+        t('targetEnvLabel'),
+        tgtUrl, tgtUser, tgtPass,
+        'import',
+        offeringCode
+      );
+    }
+
+    if (state.mode !== 'import') {
+      log(tf('testSource', { url: srcUrl }), 'api');
+      log(t('detectApiVersion'), 'api');
+      const srcResult = await apiCall('/test-connection', {
+        method: 'POST',
+        body: JSON.stringify({ url: srcUrl, username: srcUser, password: srcPass })
+      });
+      log(tf('sourceOk', { message: (srcResult.message || '') }), 'success');
+      if (srcResult.apiVersion) log(tf('detectedVersion', { version: srcResult.apiVersion }), 'info');
+      if (srcResult.warning) log(tf('warningPrefix', { warning: srcResult.warning }), 'warning');
+    }
+    if (state.mode !== 'export') {
+      log(tf('testTarget', { url: tgtUrl }), 'api');
+      log(t('detectApiVersion'), 'api');
+      const tgtResult = await apiCall('/test-connection', {
+        method: 'POST',
+        body: JSON.stringify({ url: tgtUrl, username: tgtUser, password: tgtPass })
+      });
+      log(tf('targetOk', { message: (tgtResult.message || '') }), 'success');
+      if (tgtResult.apiVersion) log(tf('detectedVersion', { version: tgtResult.apiVersion }), 'info');
+      if (tgtResult.warning) log(tf('warningPrefix', { warning: tgtResult.warning }), 'warning');
+    }
+    setStepState('validate', 'success', t('validatedOk'));
+    if (state.cancelled) throw new Error(t('cancelledByUser'));
+
+    // ---- Step 2: Export ----
+    if (state.mode !== 'import') {
+      setStepState('export', 'running', t('startExportDetail'));
+      showProgress('export', true, true);
+      log(t('step2'), 'info');
+      log('POST /fscmRestApi/resources/' + API_VERSION + '/setupOfferingCSVExports', 'api');
+
+      const exportResult = await apiCall('/export', {
+        method: 'POST',
+        body: JSON.stringify({
+          url: srcUrl, username: srcUser, password: srcPass,
+          offeringCode, faCode
+        })
+      });
+
+      state.processId = exportResult.processId;
+      log(tf('exportCreated', { processId: exportResult.processId }), 'success');
+      if (exportResult.apiVersion) log(tf('apiVersionUsed', { version: exportResult.apiVersion }), 'info');
+      if (exportResult.fullResponse) log(tf('fullResponse', { response: JSON.stringify(exportResult.fullResponse).substring(0, 500) }), 'api');
+
+      // Poll for completion
+      log(t('waitingProcess'), 'info');
+      let completed = false;
+      let pollCount = 0;
+      while (!completed && !state.cancelled) {
+        await sleep(5000);
+        pollCount++;
+        log(tf('checkingStatus', { n: pollCount }), 'api');
+        try {
+          const status = await apiCall('/export-status', {
+            method: 'POST',
+            body: JSON.stringify({
+              url: srcUrl, username: srcUser, password: srcPass,
+              offeringCode, processId: exportResult.processId
+            })
+          });
+          log(tf('statusValue', { status: status.status }), 'info');
+          if (status.completed) {
+            completed = true;
+            setProgress('export', 100, 'success');
+            setStepState('export', 'success', tf('exportCompletedDetail', { processId: exportResult.processId }));
+            if (status.rolesCount) {
+              state.stats.roles = status.rolesCount;
+              log(tf('rolesExported', { count: status.rolesCount }), 'success');
+            }
+          } else if (status.failed) {
+            const terminalErr = new Error(tf('exportFailed', { error: (status.error || 'unknown error') }));
+            terminalErr.isTerminal = true;
+            throw terminalErr;
+          }
+        } catch (pollErr) {
+          if (pollErr.isTerminal) throw pollErr;
+          log(t('statusRetry'), 'warning');
+        }
+        if (pollCount > 120) throw new Error(t('exportTimeout'));
+      }
+      if (state.cancelled) throw new Error(t('cancelledByUser'));
+
+      // ---- Step 3: Download ----
+      setStepState('download', 'running', t('startDownloadDetail'));
+      log(t('step3'), 'info');
+
+      const downloadResult = await apiCall('/download', {
+        method: 'POST',
+        body: JSON.stringify({
+          url: srcUrl, username: srcUser, password: srcPass,
+          offeringCode, processId: exportResult.processId
+        })
+      });
+
+      log(tf('downloadDone', { fileName: downloadResult.fileName, fileSize: downloadResult.fileSize }), 'success');
+      setStepState('download', 'success', tf('downloadDoneDetail', { fileName: downloadResult.fileName }));
+
+      // Trigger browser download
+      if (downloadResult.fileContent) {
+        const bytes = atob(downloadResult.fileContent);
+        const arr = new Uint8Array(bytes.length);
+        for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+        const blob = new Blob([arr], { type: 'application/zip' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = downloadResult.fileName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        log(tf('browserSaved', { fileName: downloadResult.fileName }), 'success');
+      }
+
+      // If export only, mark remaining steps as skipped
+      if (state.mode === 'export') {
+        setStepState('import', 'skipped', t('importSkippedExportOnly'));
+        setStepState('sync', 'skipped', t('importSkippedExportOnly'));
+      }
+    } else {
+      // Import only - skip export steps
+      setStepState('export', 'skipped', t('exportSkippedImportOnly'));
+      setStepState('download', 'skipped', t('downloadSkippedImportOnly'));
+    }
+
+    // ---- Step 4: Import ----
+    if (state.mode !== 'export') {
+      setStepState('import', 'running', t('startImportDetail'));
+      showProgress('import', true, true);
+      log(t('step4'), 'info');
+
+      // Read file as base64
+      let fileBase64;
+      let fileName;
+      if (state.mode === 'import') {
+        fileBase64 = await readFileAsBase64(state.importFile);
+        fileName = state.importFile.name;
+      } else {
+        // Use the file from the export step (already on backend)
+        fileBase64 = null; // backend will use cached file
+        fileName = 'auto';
+      }
+
+      log('POST /fscmRestApi/resources/' + API_VERSION + '/setupOfferingCSVImports', 'api');
+      const importResult = await apiCall('/import', {
+        method: 'POST',
+        body: JSON.stringify({
+          url: tgtUrl, username: tgtUser, password: tgtPass,
+          offeringCode, faCode,
+          fileContent: fileBase64, fileName,
+          useExportedFile: state.mode === 'full'
+        })
+      });
+
+      log(tf('importCreated', { processId: importResult.processId }), 'success');
+
+      // Poll for completion
+      let completed = false;
+      let pollCount = 0;
+      while (!completed && !state.cancelled) {
+        await sleep(5000);
+        pollCount++;
+        log(tf('checkingImportStatus', { n: pollCount }), 'api');
+        try {
+          const status = await apiCall('/import-status', {
+            method: 'POST',
+            body: JSON.stringify({
+              url: tgtUrl, username: tgtUser, password: tgtPass,
+              offeringCode, processId: importResult.processId
+            })
+          });
+          log(tf('statusValue', { status: status.status }), 'info');
+          if (status.completed) {
+            completed = true;
+            setProgress('import', 100, 'success');
+            setStepState('import', 'success', tf('importCompletedDetail', { processId: importResult.processId }));
+          } else if (status.failed) {
+            const terminalErr = new Error(tf('importFailed', { error: (status.error || 'unknown error') }));
+            terminalErr.isTerminal = true;
+            throw terminalErr;
+          }
+        } catch (pollErr) {
+          if (pollErr.isTerminal) throw pollErr;
+          log(t('statusRetry'), 'warning');
+        }
+        if (pollCount > 120) throw new Error(t('importTimeout'));
+      }
+      if (state.cancelled) throw new Error(t('cancelledByUser'));
+
+      // ---- Step 5: Sync ----
+      setStepState('sync', 'running', t('startSyncDetail'));
+      log(t('step5'), 'info');
+      log(t('manualAction'), 'warning');
+      log(t('manualNav'), 'warning');
+      setStepState('sync', 'success', t('syncDoneDetail'));
+    } else {
+      if (state.mode === 'export') {
+        // Already handled above
+      }
+    }
+
+    // ---- Complete ----
+    const elapsed = ((Date.now() - state.startTime) / 1000).toFixed(1);
+    state.stats.time = elapsed;
+    log(tf('opSuccess', { elapsed }), 'success');
+    showBanner('ok', tf('opSuccessBanner', { elapsed }));
+    showSummary();
+
+  } catch (err) {
+    const elapsed = ((Date.now() - state.startTime) / 1000).toFixed(1);
+    state.stats.errors++;
+    log(tf('errorPrefix', { message: err.message }), 'error');
+    log(tf('opFailed', { elapsed }), 'error');
+    showBanner('err', tf('opErrorBanner', { msg: escapeHtml(err.message) }));
+
+    // Mark current running step as error
+    document.querySelectorAll('.step.running').forEach(el => {
+      el.className = 'step error';
+      const bar = el.querySelector('.progress-bar');
+      if (bar) { const fill = bar.querySelector('.progress-fill'); fill.className = 'progress-fill error'; fill.style.width = '100%'; }
+    });
+    showSummary();
+  } finally {
+    state.running = false;
+    document.getElementById('btnExecute').disabled = false;
+    document.getElementById('btnCancel').disabled = true;
+  }
+}
+
+function cancelOperation() {
+  state.cancelled = true;
+  log(t('cancelRequested'), 'warning');
+}
+
+async function runDiagnostic() {
+  const srcUrl = document.getElementById('srcUrl').value.trim();
+  const srcUser = document.getElementById('srcUser').value.trim();
+  const srcPass = document.getElementById('srcPass').value;
+  if (!srcUrl || !srcUser || !srcPass) {
+    showBanner('err', t('fillSourceFirst'));
+    return;
+  }
+  const offeringCode = document.getElementById('customOfferingCode').value.trim() || (OFFERINGS[state.offering] && OFFERINGS[state.offering].code) || 'FIN_FSCM_OFFERING';
+  const faCode = 'ORA_ASE_USERS_AND_SECURITY';
+  const btn = document.getElementById('btnDiag');
+  btn.disabled = true;
+  btn.innerHTML = '<span>&#x23F3;</span> ' + t('testing');
+  log(t('diagStart'), 'info');
+  log(t('diagApi'), 'api');
+  try {
+    const resp = await fetch(getBackendUrl() + '/api/debug-ess', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url: srcUrl, username: srcUser, password: srcPass, offeringCode, faCode})
+    });
+    const data = await resp.json();
+    log(t('diagResult'), 'success');
+    for (const [key, val] of Object.entries(data)) {
+      const valStr = typeof val === 'object' ? JSON.stringify(val, null, 2) : String(val);
+      log(key + ': ' + valStr.substring(0, 500), 'info');
+    }
+    log(t('diagEnd'), 'success');
+  } catch (err) {
+    log(tf('diagError', { message: err.message }), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>&#x1F50D;</span> <span id="txtBtnDiag">' + t('btnDiagnose') + '</span>';
+  }
+}
+
+function showSummary() {
+  const el = document.getElementById('summaryStats');
+  el.classList.remove('hidden');
+  document.getElementById('statRoles').textContent = state.stats.roles;
+  document.getElementById('statHierarchies').textContent = state.stats.hierarchies;
+  document.getElementById('statErrors').textContent = state.stats.errors;
+  const elapsed = ((Date.now() - state.startTime) / 1000).toFixed(0);
+  document.getElementById('statTime').textContent = elapsed + 's';
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ============================================================
+// DRAG & DROP
+// ============================================================
+const dropZone = document.getElementById('fileDropZone');
+if (dropZone) {
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = 'var(--accent)'; });
+  dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = ''; });
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.style.borderColor = '';
+    if (e.dataTransfer.files.length) {
+      document.getElementById('importFile').files = e.dataTransfer.files;
+      handleFileSelect({ target: { files: e.dataTransfer.files } });
+    }
+  });
+}
+
+loadUserPreferences();
+resetSteps();
+</script>
+</body>
+</html>
