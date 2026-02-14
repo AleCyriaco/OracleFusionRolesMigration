@@ -245,6 +245,57 @@
   .sso-fields.visible { display: block; }
   .basic-fields.hidden { display: none; }
 
+  /* SSO Instructions & Login Button */
+  .sso-instructions {
+    background: var(--info-bg);
+    border: 1px solid var(--info);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .sso-instructions p { margin-bottom: 6px; }
+  .sso-instructions strong { color: var(--text); }
+  .sso-instructions ol { padding-left: 20px; margin: 0; }
+  .sso-instructions li { margin-bottom: 2px; }
+  .sso-login-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background: var(--accent-glow);
+    color: var(--accent2);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-bottom: 12px;
+  }
+  .sso-login-btn:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+  .sso-fields textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 10px 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    resize: vertical;
+  }
+  .sso-fields textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
   /* Connection Test */
   .test-btn {
     display: inline-flex; align-items: center; gap: 6px;
@@ -613,7 +664,7 @@
           &#x1F511; <span id="txtSrcAuthBasic">Basic Auth</span>
         </button>
         <button class="auth-toggle-btn" onclick="toggleAuthType('src','sso')" id="srcAuthSsoBtn">
-          &#x1F310; <span id="txtSrcAuthSSO">SSO (OAuth2)</span>
+          &#x1F310; <span id="txtSrcAuthSSO">SSO</span>
         </button>
       </div>
       <div class="form-group">
@@ -636,22 +687,21 @@
         </div>
       </div>
       <div id="srcSsoFields" class="sso-fields">
-        <div class="form-group">
-          <label id="lblSrcTokenUrl">IDCS Token URL</label>
-          <input type="url" id="srcTokenUrl" placeholder="https://idcs-xxxx.identity.oraclecloud.com/oauth2/v1/token" />
+        <div class="sso-instructions" id="srcSsoInstructions">
+          <p><strong id="txtSrcSsoStepsTitle">Como obter o cookie de sess&atilde;o:</strong></p>
+          <ol>
+            <li id="txtSrcSsoStep1">Clique em "Abrir Login SSO" abaixo para acessar a p&aacute;gina de login do Oracle Fusion.</li>
+            <li id="txtSrcSsoStep2">Fa&ccedil;a login normalmente via SSO (ser&aacute; redirecionado ao IdP da sua empresa).</li>
+            <li id="txtSrcSsoStep3">Ap&oacute;s o login, abra as DevTools do navegador (F12) &rarr; aba "Application" &rarr; "Cookies".</li>
+            <li id="txtSrcSsoStep4">Copie todos os cookies (formato: NOME=VALOR; NOME2=VALOR2) e cole no campo abaixo.</li>
+          </ol>
         </div>
-        <div class="input-row">
-          <div class="form-group">
-            <label id="lblSrcClientId">Client ID</label>
-            <input type="text" id="srcClientId" placeholder="abcdef1234567890abcdef1234567890" />
-          </div>
-          <div class="form-group">
-            <label id="lblSrcClientSecret">Client Secret</label>
-            <div class="password-wrap">
-              <input type="password" id="srcClientSecret" placeholder="********" />
-              <button class="toggle-pass" onclick="togglePass('srcClientSecret', this)">&#128065;</button>
-            </div>
-          </div>
+        <button class="sso-login-btn" onclick="openSsoLogin('src')" id="srcSsoLoginBtn">
+          &#x1F310; <span id="txtSrcSsoLoginBtn">Abrir Login SSO</span>
+        </button>
+        <div class="form-group">
+          <label id="lblSrcCookies">Cookie de Sess&atilde;o</label>
+          <textarea id="srcCookies" rows="3" placeholder="ORA_WX_SESSION=xxx; JSESSIONID=yyy; ..."></textarea>
         </div>
       </div>
       <button class="test-btn" onclick="testConnection('src')">
@@ -673,7 +723,7 @@
           &#x1F511; <span id="txtTgtAuthBasic">Basic Auth</span>
         </button>
         <button class="auth-toggle-btn" onclick="toggleAuthType('tgt','sso')" id="tgtAuthSsoBtn">
-          &#x1F310; <span id="txtTgtAuthSSO">SSO (OAuth2)</span>
+          &#x1F310; <span id="txtTgtAuthSSO">SSO</span>
         </button>
       </div>
       <div class="form-group">
@@ -696,22 +746,21 @@
         </div>
       </div>
       <div id="tgtSsoFields" class="sso-fields">
-        <div class="form-group">
-          <label id="lblTgtTokenUrl">IDCS Token URL</label>
-          <input type="url" id="tgtTokenUrl" placeholder="https://idcs-xxxx.identity.oraclecloud.com/oauth2/v1/token" />
+        <div class="sso-instructions" id="tgtSsoInstructions">
+          <p><strong id="txtTgtSsoStepsTitle">Como obter o cookie de sess&atilde;o:</strong></p>
+          <ol>
+            <li id="txtTgtSsoStep1">Clique em "Abrir Login SSO" abaixo para acessar a p&aacute;gina de login do Oracle Fusion.</li>
+            <li id="txtTgtSsoStep2">Fa&ccedil;a login normalmente via SSO (ser&aacute; redirecionado ao IdP da sua empresa).</li>
+            <li id="txtTgtSsoStep3">Ap&oacute;s o login, abra as DevTools do navegador (F12) &rarr; aba "Application" &rarr; "Cookies".</li>
+            <li id="txtTgtSsoStep4">Copie todos os cookies (formato: NOME=VALOR; NOME2=VALOR2) e cole no campo abaixo.</li>
+          </ol>
         </div>
-        <div class="input-row">
-          <div class="form-group">
-            <label id="lblTgtClientId">Client ID</label>
-            <input type="text" id="tgtClientId" placeholder="abcdef1234567890abcdef1234567890" />
-          </div>
-          <div class="form-group">
-            <label id="lblTgtClientSecret">Client Secret</label>
-            <div class="password-wrap">
-              <input type="password" id="tgtClientSecret" placeholder="********" />
-              <button class="toggle-pass" onclick="togglePass('tgtClientSecret', this)">&#128065;</button>
-            </div>
-          </div>
+        <button class="sso-login-btn" onclick="openSsoLogin('tgt')" id="tgtSsoLoginBtn">
+          &#x1F310; <span id="txtTgtSsoLoginBtn">Abrir Login SSO</span>
+        </button>
+        <div class="form-group">
+          <label id="lblTgtCookies">Cookie de Sess&atilde;o</label>
+          <textarea id="tgtCookies" rows="3" placeholder="ORA_WX_SESSION=xxx; JSESSIONID=yyy; ..."></textarea>
         </div>
       </div>
       <button class="test-btn" onclick="testConnection('tgt')">
@@ -1091,11 +1140,15 @@ const I18N = {
     lightTheme: 'Claro',
     darkTheme: 'Escuro',
     authTypeBasic: 'Basic Auth',
-    authTypeSSO: 'SSO (OAuth2)',
-    labelTokenUrl: 'IDCS Token URL',
-    labelClientId: 'Client ID',
-    labelClientSecret: 'Client Secret',
-    ssoRequired: 'Preencha as credenciais SSO (Token URL, Client ID e Client Secret).'
+    authTypeSSO: 'SSO',
+    labelCookies: 'Cookie de Sessão',
+    ssoLoginBtn: 'Abrir Login SSO',
+    ssoStepsTitle: 'Como obter o cookie de sessão:',
+    ssoStep1: 'Clique em "Abrir Login SSO" abaixo para acessar a página de login do Oracle Fusion.',
+    ssoStep2: 'Faça login normalmente via SSO (será redirecionado ao IdP da sua empresa).',
+    ssoStep3: 'Após o login, abra as DevTools do navegador (F12) → aba "Application" → "Cookies".',
+    ssoStep4: 'Copie todos os cookies (formato: NOME=VALOR; NOME2=VALOR2) e cole no campo abaixo.',
+    ssoRequired: 'Preencha o campo de cookie de sessão SSO.'
   },
   en: {
     locale: 'en-US',
@@ -1247,11 +1300,15 @@ const I18N = {
     lightTheme: 'Light',
     darkTheme: 'Dark',
     authTypeBasic: 'Basic Auth',
-    authTypeSSO: 'SSO (OAuth2)',
-    labelTokenUrl: 'IDCS Token URL',
-    labelClientId: 'Client ID',
-    labelClientSecret: 'Client Secret',
-    ssoRequired: 'Fill in SSO credentials (Token URL, Client ID, and Client Secret).'
+    authTypeSSO: 'SSO',
+    labelCookies: 'Session Cookie',
+    ssoLoginBtn: 'Open SSO Login',
+    ssoStepsTitle: 'How to get the session cookie:',
+    ssoStep1: 'Click "Open SSO Login" below to access the Oracle Fusion login page.',
+    ssoStep2: 'Log in normally via SSO (you will be redirected to your company\'s IdP).',
+    ssoStep3: 'After login, open the browser DevTools (F12) → "Application" tab → "Cookies".',
+    ssoStep4: 'Copy all cookies (format: NAME=VALUE; NAME2=VALUE2) and paste in the field below.',
+    ssoRequired: 'Fill in the SSO session cookie field.'
   },
   es: {
     locale: 'es-ES',
@@ -1403,11 +1460,15 @@ const I18N = {
     lightTheme: 'Claro',
     darkTheme: 'Oscuro',
     authTypeBasic: 'Basic Auth',
-    authTypeSSO: 'SSO (OAuth2)',
-    labelTokenUrl: 'IDCS Token URL',
-    labelClientId: 'Client ID',
-    labelClientSecret: 'Client Secret',
-    ssoRequired: 'Completa las credenciales SSO (Token URL, Client ID y Client Secret).'
+    authTypeSSO: 'SSO',
+    labelCookies: 'Cookie de Sesión',
+    ssoLoginBtn: 'Abrir Login SSO',
+    ssoStepsTitle: 'Cómo obtener la cookie de sesión:',
+    ssoStep1: 'Haz clic en "Abrir Login SSO" abajo para acceder a la página de login de Oracle Fusion.',
+    ssoStep2: 'Inicia sesión normalmente vía SSO (serás redirigido al IdP de tu empresa).',
+    ssoStep3: 'Después del login, abre las DevTools del navegador (F12) → pestaña "Application" → "Cookies".',
+    ssoStep4: 'Copia todas las cookies (formato: NOMBRE=VALOR; NOMBRE2=VALOR2) y pégalas en el campo de abajo.',
+    ssoRequired: 'Completa el campo de cookie de sesión SSO.'
   }
 };
 
@@ -1498,12 +1559,20 @@ function applyLanguage() {
   setNodeText('txtSrcAuthSSO', dict.authTypeSSO);
   setNodeText('txtTgtAuthBasic', dict.authTypeBasic);
   setNodeText('txtTgtAuthSSO', dict.authTypeSSO);
-  setNodeText('lblSrcTokenUrl', dict.labelTokenUrl);
-  setNodeText('lblSrcClientId', dict.labelClientId);
-  setNodeText('lblSrcClientSecret', dict.labelClientSecret);
-  setNodeText('lblTgtTokenUrl', dict.labelTokenUrl);
-  setNodeText('lblTgtClientId', dict.labelClientId);
-  setNodeText('lblTgtClientSecret', dict.labelClientSecret);
+  setNodeText('lblSrcCookies', dict.labelCookies);
+  setNodeText('lblTgtCookies', dict.labelCookies);
+  setNodeText('txtSrcSsoLoginBtn', dict.ssoLoginBtn);
+  setNodeText('txtTgtSsoLoginBtn', dict.ssoLoginBtn);
+  setNodeText('txtSrcSsoStepsTitle', dict.ssoStepsTitle);
+  setNodeText('txtTgtSsoStepsTitle', dict.ssoStepsTitle);
+  setNodeText('txtSrcSsoStep1', dict.ssoStep1);
+  setNodeText('txtSrcSsoStep2', dict.ssoStep2);
+  setNodeText('txtSrcSsoStep3', dict.ssoStep3);
+  setNodeText('txtSrcSsoStep4', dict.ssoStep4);
+  setNodeText('txtTgtSsoStep1', dict.ssoStep1);
+  setNodeText('txtTgtSsoStep2', dict.ssoStep2);
+  setNodeText('txtTgtSsoStep3', dict.ssoStep3);
+  setNodeText('txtTgtSsoStep4', dict.ssoStep4);
   setNodeText('txtOperationTitle', dict.operationTitle);
   setNodeText('txtModeExportTitle', dict.modeExportTitle);
   setNodeText('txtModeExportDesc', dict.modeExportDesc);
@@ -1594,6 +1663,15 @@ function toggleAuthType(prefix, type) {
   ssoFields.classList.toggle('visible', type === 'sso');
 }
 
+function openSsoLogin(prefix) {
+  const url = document.getElementById(prefix + 'Url').value.trim();
+  if (!url) {
+    showBanner('err', '&#x26A0; ' + t('labelEnvironmentUrl') + '!');
+    return;
+  }
+  window.open(url.replace(/\/+$/, '') + '/fscmUI/faces/FuseWelcome', '_blank');
+}
+
 function getEnvCredentials(prefix) {
   const authType = state[prefix + 'AuthType'];
   const url = document.getElementById(prefix + 'Url').value.trim();
@@ -1601,9 +1679,7 @@ function getEnvCredentials(prefix) {
     return {
       url,
       authType: 'sso',
-      tokenUrl: document.getElementById(prefix + 'TokenUrl').value.trim(),
-      clientId: document.getElementById(prefix + 'ClientId').value.trim(),
-      clientSecret: document.getElementById(prefix + 'ClientSecret').value,
+      cookies: document.getElementById(prefix + 'Cookies').value.trim(),
     };
   }
   return {
@@ -1618,7 +1694,7 @@ function validateEnvCredentials(prefix) {
   const creds = getEnvCredentials(prefix);
   if (!creds.url) return false;
   if (creds.authType === 'sso') {
-    return !!(creds.tokenUrl && creds.clientId && creds.clientSecret);
+    return !!creds.cookies;
   }
   return !!(creds.username && creds.password);
 }

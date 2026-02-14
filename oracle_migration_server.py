@@ -91,13 +91,12 @@ def get_payload(required_fields=None):
         auth_type = data.get("authType", "basic")
         fields = list(required_fields)
         if auth_type == "sso":
-            # Replace username/password with SSO fields
+            # Replace username/password with cookies field
             for f in ("username", "password"):
                 if f in fields:
                     fields.remove(f)
-            for f in ("tokenUrl", "clientId", "clientSecret"):
-                if f not in fields:
-                    fields.append(f)
+            if "cookies" not in fields:
+                fields.append("cookies")
         missing = [field for field in fields if not data.get(field)]
         if missing:
             return None, (
@@ -116,44 +115,23 @@ def index():
     return send_file("oracle_migration_gui.html")
 
 
-# ============================================================
-# Helper: OAuth2 Token Exchange (IDCS)
-# ============================================================
-def get_oauth_token(token_url, client_id, client_secret, scope=None):
-    """Exchange OAuth2 Client Credentials for Bearer token via IDCS."""
-    payload = {"grant_type": "client_credentials"}
-    if scope:
-        payload["scope"] = scope
-    resp = http_requests.post(
-        token_url, data=payload,
-        auth=HTTPBasicAuth(client_id, client_secret),
-        timeout=30, verify=True,
-    )
-    resp.raise_for_status()
-    return resp.json()["access_token"]
-
-
 def resolve_auth(data):
     """
     Resolve auth credentials from request payload.
-    For authType=sso: obtains Bearer token from IDCS via Client Credentials grant.
+    For authType=sso: returns session cookies captured from browser SSO login.
     For authType=basic (default): returns username/password as-is.
-    Returns dict with keys: username, password, token.
+    Returns dict with keys: username, password, token, cookies.
     """
     auth_type = data.get("authType", "basic")
     if auth_type == "sso":
-        token = get_oauth_token(
-            data["tokenUrl"], data["clientId"], data["clientSecret"],
-            data.get("scope"),
-        )
-        return {"token": token, "username": None, "password": None}
-    return {"token": None, "username": data["username"], "password": data["password"]}
+        return {"token": None, "username": None, "password": None, "cookies": data.get("cookies", "")}
+    return {"token": None, "username": data["username"], "password": data["password"], "cookies": None}
 
 
 # ============================================================
 # Helper: Make Oracle API call
 # ============================================================
-def oracle_request(method, base_url, path, username=None, password=None, token=None, **kwargs):
+def oracle_request(method, base_url, path, username=None, password=None, token=None, cookies=None, **kwargs):
     """Proxy request to Oracle Fusion Cloud REST API."""
     url = f"{base_url.rstrip('/')}{path}"
     headers = kwargs.pop("headers", {})
@@ -161,7 +139,9 @@ def oracle_request(method, base_url, path, username=None, password=None, token=N
     headers.setdefault("Accept", "application/json")
 
     auth = None
-    if token:
+    if cookies:
+        headers["Cookie"] = cookies
+    elif token:
         headers["Authorization"] = f"Bearer {token}"
     else:
         auth = HTTPBasicAuth(username, password)
@@ -173,7 +153,7 @@ def oracle_request(method, base_url, path, username=None, password=None, token=N
     return resp
 
 
-def detect_api_version(base_url, username=None, password=None, token=None):
+def detect_api_version(base_url, username=None, password=None, token=None, cookies=None):
     """
     Auto-detecta a versão correta da REST API tentando múltiplas versões.
     Retorna a primeira que responde com 200.
@@ -187,7 +167,7 @@ def detect_api_version(base_url, username=None, password=None, token=None):
     for version in API_VERSIONS:
         try:
             path = f"/fscmRestApi/resources/{version}/setupOfferings?limit=1&onlyData=true"
-            resp = oracle_request("GET", base_url, path, username, password, token=token)
+            resp = oracle_request("GET", base_url, path, username, password, token=token, cookies=cookies)
             if resp.status_code == 200:
                 _api_version_cache[base_url] = version
                 return version
@@ -202,7 +182,7 @@ def detect_api_version(base_url, username=None, password=None, token=None):
     for version in API_VERSIONS:
         try:
             path = f"/fscmRestApi/resources/{version}/describe"
-            resp = oracle_request("GET", base_url, path, username, password, token=token)
+            resp = oracle_request("GET", base_url, path, username, password, token=token, cookies=cookies)
             if resp.status_code in (200, 401, 403):
                 _api_version_cache[base_url] = version
                 return version
@@ -212,9 +192,9 @@ def detect_api_version(base_url, username=None, password=None, token=None):
     return API_VERSIONS[0]  # Default fallback
 
 
-def get_api_version(base_url, username=None, password=None, token=None):
+def get_api_version(base_url, username=None, password=None, token=None, cookies=None):
     """Get cached or detect API version."""
-    return detect_api_version(base_url, username, password, token=token)
+    return detect_api_version(base_url, username, password, token=token, cookies=cookies)
 
 
 def _to_positive_int(value):
@@ -331,6 +311,7 @@ def test_connection():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
 
     # Ensure https
     if not url.startswith("http"):
@@ -355,7 +336,7 @@ def test_connection():
         for version in API_VERSIONS:
             path = path_template.replace("{v}", version)
             try:
-                resp = oracle_request("GET", url, path, username, password, token=token)
+                resp = oracle_request("GET", url, path, username, password, token=token, cookies=cookies)
 
                 if resp.status_code == 200:
                     detected_version = version
@@ -438,6 +419,7 @@ def validate_access():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
     mode = str(data.get("mode", "export")).lower()
     if mode not in ("export", "import", "full"):
         mode = "export"
@@ -454,7 +436,7 @@ def validate_access():
 
     def run_get_check(key, path):
         try:
-            resp = oracle_request("GET", url, path, username, password, token=token)
+            resp = oracle_request("GET", url, path, username, password, token=token, cookies=cookies)
             checks[key] = {"status": resp.status_code, "ok": resp.status_code == 200, "path": path}
             return resp
         except Exception as ex:
@@ -462,7 +444,7 @@ def validate_access():
             return None
 
     try:
-        api_version = get_api_version(url, username, password, token=token)
+        api_version = get_api_version(url, username, password, token=token, cookies=cookies)
     except Exception as ex:
         return jsonify({
             "status": "blocked",
@@ -595,11 +577,12 @@ def export_roles():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
     offering_code = data["offeringCode"]
     fa_code = data["faCode"]
 
     try:
-        api_version = get_api_version(url, username, password, token=token)
+        api_version = get_api_version(url, username, password, token=token, cookies=cookies)
         process_id = None
         attempt_errors = []
         child_collection_path = None
@@ -640,7 +623,7 @@ def export_roles():
             print(f"[EXPORT] POST attempt {idx}/{len(fa_candidates)} {url}{path}", flush=True)
             print(f"[EXPORT] Payload: {json.dumps(payload)}", flush=True)
 
-            resp = oracle_request("POST", url, path, username, password, token=token, json=payload)
+            resp = oracle_request("POST", url, path, username, password, token=token, cookies=cookies, json=payload)
             print(f"[EXPORT] HTTP {resp.status_code}", flush=True)
             raw_text = resp.text[:3000]
             print(f"[EXPORT] Response:\n{raw_text}", flush=True)
@@ -731,7 +714,7 @@ def export_roles():
                         print(f"[EXPORT] Following child link: {href}", flush=True)
                         try:
                             parsed = urlparse(href)
-                            child_resp = oracle_request("GET", url, parsed.path, username, password, token=token)
+                            child_resp = oracle_request("GET", url, parsed.path, username, password, token=token, cookies=cookies)
                             if child_resp.status_code == 200:
                                 child_data = child_resp.json()
                                 items = child_data.get("items", [])
@@ -761,7 +744,7 @@ def export_roles():
                     print(f"[EXPORT] Waiting {wait_secs}s before poll {attempt}...", flush=True)
                     time.sleep(wait_secs)
                 try:
-                    cr = oracle_request("GET", url, child_path, username, password, token=token)
+                    cr = oracle_request("GET", url, child_path, username, password, token=token, cookies=cookies)
                     if cr.status_code == 200:
                         cd = cr.json()
                         items = cd.get("items", [])
@@ -821,7 +804,7 @@ def export_roles():
             print(f"[EXPORT] POST {child_path}", flush=True)
             try:
                 proc_resp = oracle_request(
-                    "POST", url, child_path, username, password, token=token,
+                    "POST", url, child_path, username, password, token=token, cookies=cookies,
                     json=child_payload,
                     headers={
                         "Content-Type": "application/vnd.oracle.adf.resourceitem+json",
@@ -844,7 +827,7 @@ def export_roles():
                     fallback_payload = {"OfferingCode": offering_code}
                     print(f"[EXPORT] Child POST retry without FunctionalAreaCode", flush=True)
                     proc_resp = oracle_request(
-                        "POST", url, child_path, username, password, token=token,
+                        "POST", url, child_path, username, password, token=token, cookies=cookies,
                         json=fallback_payload,
                         headers={
                             "Content-Type": "application/vnd.oracle.adf.resourceitem+json",
@@ -893,7 +876,7 @@ def export_roles():
                         for attempt in range(1, 4):
                             time.sleep(10)
                             try:
-                                cr = oracle_request("GET", url, child_path, username, password, token=token)
+                                cr = oracle_request("GET", url, child_path, username, password, token=token, cookies=cookies)
                                 if cr.status_code == 200:
                                     cd = cr.json()
                                     items = cd.get("items", [])
@@ -926,7 +909,7 @@ def export_roles():
             try:
                 er = oracle_request(
                     "GET", url, "/ess/rest/scheduler/v1/requests", username, password,
-                    token=token, headers=ess_hdrs,
+                    token=token, cookies=cookies, headers=ess_hdrs,
                 )
                 print(f"[EXPORT] ESS list HTTP {er.status_code}", flush=True)
                 if er.status_code == 200:
@@ -941,7 +924,7 @@ def export_roles():
                             detail_resp = oracle_request(
                                 "GET", url,
                                 f"/ess/rest/scheduler/v1/requests/{rid}?fields=@full",
-                                username, password, token=token, headers=ess_hdrs,
+                                username, password, token=token, cookies=cookies, headers=ess_hdrs,
                             )
                             if detail_resp.status_code == 200:
                                 detail = detail_resp.json()
@@ -997,6 +980,7 @@ def debug_ess():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
     offering_code = data.get("offeringCode", "FIN_FSCM_OFFERING")
     fa_code = data.get("faCode", "ORA_ASE_USERS_AND_SECURITY")
     results = {}
@@ -1005,17 +989,17 @@ def debug_ess():
 
     # 1) Get one ESS job with full details
     try:
-        r = oracle_request("GET", url, "/ess/rest/scheduler/v1/requests", username, password, token=token, headers=ess_hdrs)
+        r = oracle_request("GET", url, "/ess/rest/scheduler/v1/requests", username, password, token=token, cookies=cookies, headers=ess_hdrs)
         if r.status_code == 200:
             items = r.json().get("items", [])
             results["ess_job_count"] = len(items)
             if items:
                 rid = items[0].get("requestId")
                 # Get full detail of first job
-                dr = oracle_request("GET", url, f"/ess/rest/scheduler/v1/requests/{rid}", username, password, token=token, headers=ess_hdrs)
+                dr = oracle_request("GET", url, f"/ess/rest/scheduler/v1/requests/{rid}", username, password, token=token, cookies=cookies, headers=ess_hdrs)
                 results["ess_sample_job_full"] = dr.json() if dr.status_code == 200 else f"HTTP {dr.status_code}"
                 # Also try ?fields=@full
-                dr2 = oracle_request("GET", url, f"/ess/rest/scheduler/v1/requests/{rid}?fields=@full", username, password, token=token, headers=ess_hdrs)
+                dr2 = oracle_request("GET", url, f"/ess/rest/scheduler/v1/requests/{rid}?fields=@full", username, password, token=token, cookies=cookies, headers=ess_hdrs)
                 results["ess_sample_job_fields_full"] = dr2.json() if dr2.status_code == 200 else f"HTTP {dr2.status_code}: {dr2.text[:500]}"
     except Exception as e:
         results["ess_error"] = str(e)
@@ -1023,7 +1007,7 @@ def debug_ess():
     # 2) Check user roles/permissions via SCIM
     try:
         scim_filter = f"?filter=userName eq \"{username}\"&attributes=roles" if username else "?attributes=roles&count=1"
-        r = oracle_request("GET", url, f"/hcmRestApi/scim/Users{scim_filter}", username, password, token=token)
+        r = oracle_request("GET", url, f"/hcmRestApi/scim/Users{scim_filter}", username, password, token=token, cookies=cookies)
         if r.status_code == 200:
             user_data = r.json()
             resources = user_data.get("Resources", [])
@@ -1037,9 +1021,9 @@ def debug_ess():
         results["scim_error"] = str(e)
 
     # 3) Check what the FSM GET returns for this offering
-    api_version = get_api_version(url, username, password, token=token)
+    api_version = get_api_version(url, username, password, token=token, cookies=cookies)
     try:
-        r = oracle_request("GET", url, f"/fscmRestApi/resources/{api_version}/setupOfferingCSVExports/{offering_code}", username, password, token=token)
+        r = oracle_request("GET", url, f"/fscmRestApi/resources/{api_version}/setupOfferingCSVExports/{offering_code}", username, password, token=token, cookies=cookies)
         results["fsm_get_status"] = r.status_code
         results["fsm_get_body"] = r.json() if r.status_code == 200 else r.text[:1000]
     except Exception as e:
@@ -1054,7 +1038,7 @@ def debug_ess():
             "ContentType": "zip",
             "ParameterList": f"{offering_code},{fa_code}"
         }
-        r = oracle_request("POST", url, erp_path, username, password, token=token, json=erp_payload)
+        r = oracle_request("POST", url, erp_path, username, password, token=token, cookies=cookies, json=erp_payload)
         results["erp_integration_status"] = r.status_code
         results["erp_integration_body"] = r.json() if r.status_code < 400 else r.text[:1000]
     except Exception as e:
@@ -1082,18 +1066,19 @@ def export_status():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
     offering_code = data["offeringCode"]
     process_id = data["processId"]
 
     try:
-        api_version = get_api_version(url, username, password, token=token)
+        api_version = get_api_version(url, username, password, token=token, cookies=cookies)
         path = (
             f"/fscmRestApi/resources/{api_version}"
             f"/setupOfferingCSVExports/{offering_code}"
             f"/child/SetupOfferingCSVExportProcess/{process_id}"
         )
 
-        resp = oracle_request("GET", url, path, username, password, token=token)
+        resp = oracle_request("GET", url, path, username, password, token=token, cookies=cookies)
 
         if resp.status_code >= 400:
             return jsonify({
@@ -1144,11 +1129,12 @@ def download_export():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
     offering_code = data["offeringCode"]
     process_id = data["processId"]
 
     try:
-        api_version = get_api_version(url, username, password, token=token)
+        api_version = get_api_version(url, username, password, token=token, cookies=cookies)
         path = (
             f"/fscmRestApi/resources/{api_version}"
             f"/setupOfferingCSVExports/{offering_code}"
@@ -1158,7 +1144,7 @@ def download_export():
         )
 
         resp = oracle_request(
-            "GET", url, path, username, password, token=token,
+            "GET", url, path, username, password, token=token, cookies=cookies,
             headers={"Accept": "*/*"}
         )
 
@@ -1215,6 +1201,7 @@ def import_roles():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
     offering_code = data["offeringCode"]
     fa_code = data["faCode"]
     use_exported = data.get("useExportedFile", False)
@@ -1233,7 +1220,7 @@ def import_roles():
         elif not file_content:
             return jsonify({"error": "Conteudo do arquivo nao fornecido"}), 400
 
-        api_version = get_api_version(url, username, password, token=token)
+        api_version = get_api_version(url, username, password, token=token, cookies=cookies)
         path = f"/fscmRestApi/resources/{api_version}/setupOfferingCSVImports"
         payload = {
             "OfferingCode": offering_code,
@@ -1243,7 +1230,7 @@ def import_roles():
             "ContentType": "application/zip",
         }
 
-        resp = oracle_request("POST", url, path, username, password, token=token, json=payload)
+        resp = oracle_request("POST", url, path, username, password, token=token, cookies=cookies, json=payload)
 
         if resp.status_code >= 400:
             error_detail = ""
@@ -1298,18 +1285,19 @@ def import_status():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
     offering_code = data["offeringCode"]
     process_id = data["processId"]
 
     try:
-        api_version = get_api_version(url, username, password, token=token)
+        api_version = get_api_version(url, username, password, token=token, cookies=cookies)
         path = (
             f"/fscmRestApi/resources/{api_version}"
             f"/setupOfferingCSVImports/{offering_code}"
             f"/child/SetupOfferingCSVImportProcess/{process_id}"
         )
 
-        resp = oracle_request("GET", url, path, username, password, token=token)
+        resp = oracle_request("GET", url, path, username, password, token=token, cookies=cookies)
 
         if resp.status_code >= 400:
             return jsonify({
@@ -1358,11 +1346,12 @@ def list_roles():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
     count = data.get("count", 100)
 
     try:
         path = f"/hcmRestApi/scim/Roles?count={count}&startIndex=1"
-        resp = oracle_request("GET", url, path, username, password, token=token)
+        resp = oracle_request("GET", url, path, username, password, token=token, cookies=cookies)
 
         if resp.status_code >= 400:
             return jsonify({"error": f"HTTP {resp.status_code}: {resp.text[:200]}"}), resp.status_code
@@ -1409,12 +1398,13 @@ def debug_version():
     username = creds["username"]
     password = creds["password"]
     token = creds["token"]
+    cookies = creds["cookies"]
 
     results = []
     for version in API_VERSIONS:
         try:
             path = f"/fscmRestApi/resources/{version}/setupOfferings?limit=1&onlyData=true"
-            resp = oracle_request("GET", url, path, username, password, token=token)
+            resp = oracle_request("GET", url, path, username, password, token=token, cookies=cookies)
             results.append({
                 "version": version,
                 "status": resp.status_code,
@@ -1427,7 +1417,7 @@ def debug_version():
                 "error": str(e)
             })
 
-    detected = get_api_version(url, username, password, token=token)
+    detected = get_api_version(url, username, password, token=token, cookies=cookies)
     return jsonify({
         "detectedVersion": detected,
         "allResults": results
