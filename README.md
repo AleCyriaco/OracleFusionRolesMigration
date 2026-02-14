@@ -19,7 +19,10 @@ Web-based solution to export and import Oracle Fusion roles between environments
 - `oracle_migration_server.py`: Flask backend and Oracle API proxy endpoints.
 - `oracle_migration_gui.html`: Single-page frontend UI.
 - `oracle_fusion_role_migration.py`: CLI migration utility.
-- `guia_migracao_roles_oracle_fusion.md`: Original migration notes.
+- `oracle_fusion_roles_migration_guide.md`: Full migration guide.
+- `.github/`: Pull request and issue templates.
+- `SECURITY.md`: Security reporting policy.
+- `CODE_OF_CONDUCT.md`: Community behavior expectations.
 
 ## Requirements
 - Python 3.10+
