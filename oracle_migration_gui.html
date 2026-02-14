@@ -212,6 +212,39 @@
   }
   .toggle-pass:hover { color: var(--text); }
 
+  /* Auth Mode Toggle */
+  .auth-toggle {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg);
+    margin-bottom: 14px;
+  }
+  .auth-toggle-btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text2);
+    padding: 5px 12px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+  .auth-toggle-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .auth-toggle-btn:hover:not(.active) { color: var(--text); }
+  .sso-fields { display: none; }
+  .sso-fields.visible { display: block; }
+  .basic-fields.hidden { display: none; }
+
   /* Connection Test */
   .test-btn {
     display: inline-flex; align-items: center; gap: 6px;
@@ -575,20 +608,49 @@
       <span id="txtSourceCardTitle">Ambiente de Origem (Source)</span>
     </div>
     <div class="card-body">
+      <div class="auth-toggle">
+        <button class="auth-toggle-btn active" onclick="toggleAuthType('src','basic')" id="srcAuthBasicBtn">
+          &#x1F511; <span id="txtSrcAuthBasic">Basic Auth</span>
+        </button>
+        <button class="auth-toggle-btn" onclick="toggleAuthType('src','sso')" id="srcAuthSsoBtn">
+          &#x1F310; <span id="txtSrcAuthSSO">SSO (OAuth2)</span>
+        </button>
+      </div>
       <div class="form-group">
         <label id="lblSourceUrl">URL do Ambiente</label>
         <input type="url" id="srcUrl" placeholder="https://dev-acme-fa.example.oraclecloud.com" />
       </div>
-      <div class="input-row">
-        <div class="form-group">
-          <label id="lblSourceUser">Usu&aacute;rio</label>
-          <input type="text" id="srcUser" placeholder="svc_integration_demo" />
+      <div id="srcBasicFields" class="basic-fields">
+        <div class="input-row">
+          <div class="form-group">
+            <label id="lblSourceUser">Usu&aacute;rio</label>
+            <input type="text" id="srcUser" placeholder="svc_integration_demo" />
+          </div>
+          <div class="form-group">
+            <label id="lblSourcePass">Senha</label>
+            <div class="password-wrap">
+              <input type="password" id="srcPass" placeholder="********" />
+              <button class="toggle-pass" onclick="togglePass('srcPass', this)">&#128065;</button>
+            </div>
+          </div>
         </div>
+      </div>
+      <div id="srcSsoFields" class="sso-fields">
         <div class="form-group">
-          <label id="lblSourcePass">Senha</label>
-          <div class="password-wrap">
-            <input type="password" id="srcPass" placeholder="********" />
-            <button class="toggle-pass" onclick="togglePass('srcPass', this)">&#128065;</button>
+          <label id="lblSrcTokenUrl">IDCS Token URL</label>
+          <input type="url" id="srcTokenUrl" placeholder="https://idcs-xxxx.identity.oraclecloud.com/oauth2/v1/token" />
+        </div>
+        <div class="input-row">
+          <div class="form-group">
+            <label id="lblSrcClientId">Client ID</label>
+            <input type="text" id="srcClientId" placeholder="abcdef1234567890abcdef1234567890" />
+          </div>
+          <div class="form-group">
+            <label id="lblSrcClientSecret">Client Secret</label>
+            <div class="password-wrap">
+              <input type="password" id="srcClientSecret" placeholder="********" />
+              <button class="toggle-pass" onclick="togglePass('srcClientSecret', this)">&#128065;</button>
+            </div>
           </div>
         </div>
       </div>
@@ -606,20 +668,49 @@
       <span id="txtTargetCardTitle">Ambiente de Destino (Target)</span>
     </div>
     <div class="card-body">
+      <div class="auth-toggle">
+        <button class="auth-toggle-btn active" onclick="toggleAuthType('tgt','basic')" id="tgtAuthBasicBtn">
+          &#x1F511; <span id="txtTgtAuthBasic">Basic Auth</span>
+        </button>
+        <button class="auth-toggle-btn" onclick="toggleAuthType('tgt','sso')" id="tgtAuthSsoBtn">
+          &#x1F310; <span id="txtTgtAuthSSO">SSO (OAuth2)</span>
+        </button>
+      </div>
       <div class="form-group">
         <label id="lblTargetUrl">URL do Ambiente</label>
         <input type="url" id="tgtUrl" placeholder="https://uat-acme-fa.example.oraclecloud.com" />
       </div>
-      <div class="input-row">
-        <div class="form-group">
-          <label id="lblTargetUser">Usu&aacute;rio</label>
-          <input type="text" id="tgtUser" placeholder="svc_integration_demo" />
+      <div id="tgtBasicFields" class="basic-fields">
+        <div class="input-row">
+          <div class="form-group">
+            <label id="lblTargetUser">Usu&aacute;rio</label>
+            <input type="text" id="tgtUser" placeholder="svc_integration_demo" />
+          </div>
+          <div class="form-group">
+            <label id="lblTargetPass">Senha</label>
+            <div class="password-wrap">
+              <input type="password" id="tgtPass" placeholder="********" />
+              <button class="toggle-pass" onclick="togglePass('tgtPass', this)">&#128065;</button>
+            </div>
+          </div>
         </div>
+      </div>
+      <div id="tgtSsoFields" class="sso-fields">
         <div class="form-group">
-          <label id="lblTargetPass">Senha</label>
-          <div class="password-wrap">
-            <input type="password" id="tgtPass" placeholder="********" />
-            <button class="toggle-pass" onclick="togglePass('tgtPass', this)">&#128065;</button>
+          <label id="lblTgtTokenUrl">IDCS Token URL</label>
+          <input type="url" id="tgtTokenUrl" placeholder="https://idcs-xxxx.identity.oraclecloud.com/oauth2/v1/token" />
+        </div>
+        <div class="input-row">
+          <div class="form-group">
+            <label id="lblTgtClientId">Client ID</label>
+            <input type="text" id="tgtClientId" placeholder="abcdef1234567890abcdef1234567890" />
+          </div>
+          <div class="form-group">
+            <label id="lblTgtClientSecret">Client Secret</label>
+            <div class="password-wrap">
+              <input type="password" id="tgtClientSecret" placeholder="********" />
+              <button class="toggle-pass" onclick="togglePass('tgtClientSecret', this)">&#128065;</button>
+            </div>
           </div>
         </div>
       </div>
@@ -821,7 +912,9 @@ const state = {
   processId: null,
   startTime: null,
   logs: [],
-  stats: { roles: 0, hierarchies: 0, errors: 0 }
+  stats: { roles: 0, hierarchies: 0, errors: 0 },
+  srcAuthType: 'basic',
+  tgtAuthType: 'basic'
 };
 
 const OFFERINGS = {
@@ -996,7 +1089,13 @@ const I18N = {
     finishedAt: 'Finalizado',
     themeTitle: 'Alternar tema',
     lightTheme: 'Claro',
-    darkTheme: 'Escuro'
+    darkTheme: 'Escuro',
+    authTypeBasic: 'Basic Auth',
+    authTypeSSO: 'SSO (OAuth2)',
+    labelTokenUrl: 'IDCS Token URL',
+    labelClientId: 'Client ID',
+    labelClientSecret: 'Client Secret',
+    ssoRequired: 'Preencha as credenciais SSO (Token URL, Client ID e Client Secret).'
   },
   en: {
     locale: 'en-US',
@@ -1146,7 +1245,13 @@ const I18N = {
     finishedAt: 'Finished',
     themeTitle: 'Toggle theme',
     lightTheme: 'Light',
-    darkTheme: 'Dark'
+    darkTheme: 'Dark',
+    authTypeBasic: 'Basic Auth',
+    authTypeSSO: 'SSO (OAuth2)',
+    labelTokenUrl: 'IDCS Token URL',
+    labelClientId: 'Client ID',
+    labelClientSecret: 'Client Secret',
+    ssoRequired: 'Fill in SSO credentials (Token URL, Client ID, and Client Secret).'
   },
   es: {
     locale: 'es-ES',
@@ -1296,7 +1401,13 @@ const I18N = {
     finishedAt: 'Finalizado',
     themeTitle: 'Cambiar tema',
     lightTheme: 'Claro',
-    darkTheme: 'Oscuro'
+    darkTheme: 'Oscuro',
+    authTypeBasic: 'Basic Auth',
+    authTypeSSO: 'SSO (OAuth2)',
+    labelTokenUrl: 'IDCS Token URL',
+    labelClientId: 'Client ID',
+    labelClientSecret: 'Client Secret',
+    ssoRequired: 'Completa las credenciales SSO (Token URL, Client ID y Client Secret).'
   }
 };
 
@@ -1383,6 +1494,16 @@ function applyLanguage() {
   setNodeText('lblTargetPass', dict.labelPassword);
   setNodeText('txtBtnTestSource', dict.btnTestConnection);
   setNodeText('txtBtnTestTarget', dict.btnTestConnection);
+  setNodeText('txtSrcAuthBasic', dict.authTypeBasic);
+  setNodeText('txtSrcAuthSSO', dict.authTypeSSO);
+  setNodeText('txtTgtAuthBasic', dict.authTypeBasic);
+  setNodeText('txtTgtAuthSSO', dict.authTypeSSO);
+  setNodeText('lblSrcTokenUrl', dict.labelTokenUrl);
+  setNodeText('lblSrcClientId', dict.labelClientId);
+  setNodeText('lblSrcClientSecret', dict.labelClientSecret);
+  setNodeText('lblTgtTokenUrl', dict.labelTokenUrl);
+  setNodeText('lblTgtClientId', dict.labelClientId);
+  setNodeText('lblTgtClientSecret', dict.labelClientSecret);
   setNodeText('txtOperationTitle', dict.operationTitle);
   setNodeText('txtModeExportTitle', dict.modeExportTitle);
   setNodeText('txtModeExportDesc', dict.modeExportDesc);
@@ -1459,6 +1580,47 @@ function loadUserPreferences() {
 function togglePass(id, btn) {
   const inp = document.getElementById(id);
   inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function toggleAuthType(prefix, type) {
+  state[prefix + 'AuthType'] = type;
+  const basicBtn = document.getElementById(prefix + 'AuthBasicBtn');
+  const ssoBtn = document.getElementById(prefix + 'AuthSsoBtn');
+  const basicFields = document.getElementById(prefix + 'BasicFields');
+  const ssoFields = document.getElementById(prefix + 'SsoFields');
+  basicBtn.classList.toggle('active', type === 'basic');
+  ssoBtn.classList.toggle('active', type === 'sso');
+  basicFields.classList.toggle('hidden', type !== 'basic');
+  ssoFields.classList.toggle('visible', type === 'sso');
+}
+
+function getEnvCredentials(prefix) {
+  const authType = state[prefix + 'AuthType'];
+  const url = document.getElementById(prefix + 'Url').value.trim();
+  if (authType === 'sso') {
+    return {
+      url,
+      authType: 'sso',
+      tokenUrl: document.getElementById(prefix + 'TokenUrl').value.trim(),
+      clientId: document.getElementById(prefix + 'ClientId').value.trim(),
+      clientSecret: document.getElementById(prefix + 'ClientSecret').value,
+    };
+  }
+  return {
+    url,
+    authType: 'basic',
+    username: document.getElementById(prefix + 'User').value.trim(),
+    password: document.getElementById(prefix + 'Pass').value,
+  };
+}
+
+function validateEnvCredentials(prefix) {
+  const creds = getEnvCredentials(prefix);
+  if (!creds.url) return false;
+  if (creds.authType === 'sso') {
+    return !!(creds.tokenUrl && creds.clientId && creds.clientSecret);
+  }
+  return !!(creds.username && creds.password);
 }
 
 function selectMode(mode) {
@@ -1658,12 +1820,12 @@ async function apiCall(endpoint, options = {}) {
   return data;
 }
 
-async function validateMinimumAccess(envLabel, url, username, password, mode, offeringCode) {
+async function validateMinimumAccess(envLabel, creds, mode, offeringCode) {
   let result;
   try {
     result = await apiCall('/validate-access', {
       method: 'POST',
-      body: JSON.stringify({ url, username, password, mode, offeringCode })
+      body: JSON.stringify({ ...creds, mode, offeringCode })
     });
   } catch (err) {
     const msg = String(err && err.message ? err.message : err);
@@ -1707,15 +1869,13 @@ async function validateMinimumAccess(envLabel, url, username, password, mode, of
 // TEST CONNECTION
 // ============================================================
 async function testConnection(prefix) {
-  const url = document.getElementById(prefix + 'Url').value.trim();
-  const user = document.getElementById(prefix + 'User').value.trim();
-  const pass = document.getElementById(prefix + 'Pass').value;
+  const creds = getEnvCredentials(prefix);
   const resultEl = document.getElementById(prefix + 'TestResult');
   const btn = event.target.closest('.test-btn');
 
-  if (!url || !user || !pass) {
+  if (!validateEnvCredentials(prefix)) {
     resultEl.className = 'test-result fail';
-    resultEl.innerHTML = '&#x274C; ' + t('fileRequired');
+    resultEl.innerHTML = '&#x274C; ' + t(creds.authType === 'sso' ? 'ssoRequired' : 'fileRequired');
     resultEl.classList.remove('hidden');
     return;
   }
@@ -1723,18 +1883,18 @@ async function testConnection(prefix) {
   btn.classList.add('testing');
   btn.innerHTML = '<span>&#x23F3;</span> ' + t('testing');
   resultEl.classList.add('hidden');
-  log(tf('testingConnection', { url }), 'api');
+  log(tf('testingConnection', { url: creds.url }), 'api');
 
   try {
     const data = await apiCall('/test-connection', {
       method: 'POST',
-      body: JSON.stringify({ url, username: user, password: pass })
+      body: JSON.stringify(creds)
     });
 
     resultEl.className = 'test-result ok';
     const versionInfo = data.apiVersion ? ' (API v' + data.apiVersion + ')' : '';
     resultEl.innerHTML = '&#x2705; ' + t('testOk') + versionInfo;
-    log(t('testOk') + ': ' + url + versionInfo, 'success');
+    log(t('testOk') + ': ' + creds.url + versionInfo, 'success');
     if (data.warning) log(tf('warningPrefix', { warning: data.warning }), 'warning');
   } catch (err) {
     resultEl.className = 'test-result fail';
@@ -1754,12 +1914,8 @@ async function executeOperation() {
   if (state.running) return;
 
   // Gather inputs
-  const srcUrl  = document.getElementById('srcUrl').value.trim();
-  const srcUser = document.getElementById('srcUser').value.trim();
-  const srcPass = document.getElementById('srcPass').value;
-  const tgtUrl  = document.getElementById('tgtUrl').value.trim();
-  const tgtUser = document.getElementById('tgtUser').value.trim();
-  const tgtPass = document.getElementById('tgtPass').value;
+  const srcCreds = getEnvCredentials('src');
+  const tgtCreds = getEnvCredentials('tgt');
   const customCode = document.getElementById('customOfferingCode').value.trim();
 
   const offering = OFFERINGS[state.offering];
@@ -1767,12 +1923,12 @@ async function executeOperation() {
   const faCode = offering.fa;
 
   // Validation
-  if (state.mode !== 'import' && (!srcUrl || !srcUser || !srcPass)) {
-    showBanner('err', '&#x26A0; ' + t('sourceRequired'));
+  if (state.mode !== 'import' && !validateEnvCredentials('src')) {
+    showBanner('err', '&#x26A0; ' + t(srcCreds.authType === 'sso' ? 'ssoRequired' : 'sourceRequired'));
     return;
   }
-  if (state.mode !== 'export' && (!tgtUrl || !tgtUser || !tgtPass)) {
-    showBanner('err', '&#x26A0; ' + t('targetRequired'));
+  if (state.mode !== 'export' && !validateEnvCredentials('tgt')) {
+    showBanner('err', '&#x26A0; ' + t(tgtCreds.authType === 'sso' ? 'ssoRequired' : 'targetRequired'));
     return;
   }
   if (state.mode === 'import' && !state.importFile) {
@@ -1805,7 +1961,7 @@ async function executeOperation() {
       log(t('precheckSource'), 'info');
       await validateMinimumAccess(
         t('sourceEnvLabel'),
-        srcUrl, srcUser, srcPass,
+        srcCreds,
         'export',
         offeringCode
       );
@@ -1814,29 +1970,29 @@ async function executeOperation() {
       log(t('precheckTarget'), 'info');
       await validateMinimumAccess(
         t('targetEnvLabel'),
-        tgtUrl, tgtUser, tgtPass,
+        tgtCreds,
         'import',
         offeringCode
       );
     }
 
     if (state.mode !== 'import') {
-      log(tf('testSource', { url: srcUrl }), 'api');
+      log(tf('testSource', { url: srcCreds.url }), 'api');
       log(t('detectApiVersion'), 'api');
       const srcResult = await apiCall('/test-connection', {
         method: 'POST',
-        body: JSON.stringify({ url: srcUrl, username: srcUser, password: srcPass })
+        body: JSON.stringify(srcCreds)
       });
       log(tf('sourceOk', { message: (srcResult.message || '') }), 'success');
       if (srcResult.apiVersion) log(tf('detectedVersion', { version: srcResult.apiVersion }), 'info');
       if (srcResult.warning) log(tf('warningPrefix', { warning: srcResult.warning }), 'warning');
     }
     if (state.mode !== 'export') {
-      log(tf('testTarget', { url: tgtUrl }), 'api');
+      log(tf('testTarget', { url: tgtCreds.url }), 'api');
       log(t('detectApiVersion'), 'api');
       const tgtResult = await apiCall('/test-connection', {
         method: 'POST',
-        body: JSON.stringify({ url: tgtUrl, username: tgtUser, password: tgtPass })
+        body: JSON.stringify(tgtCreds)
       });
       log(tf('targetOk', { message: (tgtResult.message || '') }), 'success');
       if (tgtResult.apiVersion) log(tf('detectedVersion', { version: tgtResult.apiVersion }), 'info');
@@ -1855,8 +2011,7 @@ async function executeOperation() {
       const exportResult = await apiCall('/export', {
         method: 'POST',
         body: JSON.stringify({
-          url: srcUrl, username: srcUser, password: srcPass,
-          offeringCode, faCode
+          ...srcCreds, offeringCode, faCode
         })
       });
 
@@ -1877,8 +2032,7 @@ async function executeOperation() {
           const status = await apiCall('/export-status', {
             method: 'POST',
             body: JSON.stringify({
-              url: srcUrl, username: srcUser, password: srcPass,
-              offeringCode, processId: exportResult.processId
+              ...srcCreds, offeringCode, processId: exportResult.processId
             })
           });
           log(tf('statusValue', { status: status.status }), 'info');
@@ -1910,8 +2064,7 @@ async function executeOperation() {
       const downloadResult = await apiCall('/download', {
         method: 'POST',
         body: JSON.stringify({
-          url: srcUrl, username: srcUser, password: srcPass,
-          offeringCode, processId: exportResult.processId
+          ...srcCreds, offeringCode, processId: exportResult.processId
         })
       });
 
@@ -1965,8 +2118,7 @@ async function executeOperation() {
       const importResult = await apiCall('/import', {
         method: 'POST',
         body: JSON.stringify({
-          url: tgtUrl, username: tgtUser, password: tgtPass,
-          offeringCode, faCode,
+          ...tgtCreds, offeringCode, faCode,
           fileContent: fileBase64, fileName,
           useExportedFile: state.mode === 'full'
         })
@@ -1985,8 +2137,7 @@ async function executeOperation() {
           const status = await apiCall('/import-status', {
             method: 'POST',
             body: JSON.stringify({
-              url: tgtUrl, username: tgtUser, password: tgtPass,
-              offeringCode, processId: importResult.processId
+              ...tgtCreds, offeringCode, processId: importResult.processId
             })
           });
           log(tf('statusValue', { status: status.status }), 'info');
@@ -2053,10 +2204,8 @@ function cancelOperation() {
 }
 
 async function runDiagnostic() {
-  const srcUrl = document.getElementById('srcUrl').value.trim();
-  const srcUser = document.getElementById('srcUser').value.trim();
-  const srcPass = document.getElementById('srcPass').value;
-  if (!srcUrl || !srcUser || !srcPass) {
+  const srcCreds = getEnvCredentials('src');
+  if (!validateEnvCredentials('src')) {
     showBanner('err', t('fillSourceFirst'));
     return;
   }
@@ -2071,7 +2220,7 @@ async function runDiagnostic() {
     const resp = await fetch(getBackendUrl() + '/api/debug-ess', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({url: srcUrl, username: srcUser, password: srcPass, offeringCode, faCode})
+      body: JSON.stringify({...srcCreds, offeringCode, faCode})
     });
     const data = await resp.json();
     log(t('diagResult'), 'success');
