@@ -56,12 +56,19 @@ _api_version_cache = {}
 # Minimal roles required for this solution to work reliably.
 REQUIRED_ACCESS_ROLES = [
     {
-        "code": "ORA_ASM_FUNCTIONAL_SETUPS_USER_ABSTRACT",
-        "name": "Export Import Functional Setups User",
+        "code": "ORA_ASM_APPLICATION_IMPLEMENTATION_CONSULTANT_JOB",
+        "name": "Application Implementation Consultant",
+        "alternativeCodes": [
+            "ORA_ASM_FUNCTIONAL_SETUPS_USER_ABSTRACT",
+            "ORA_ASM_APPLICATION_IMPLEMENTATION_MANAGER_JOB",
+            "ORA_ASM_APPLICATION_IMPLEMENTATION_ADMINISTRATOR_JOB",
+        ],
         "aliases": [
+            "application implementation consultant",
+            "application implementation manager",
+            "application implementation administrator",
             "export import functional setups user",
             "functional setups user",
-            "export import functional setup",
         ],
         "requiredFor": ["export", "import", "full"],
     },
@@ -104,6 +111,11 @@ def get_payload(required_fields=None):
                 400,
             )
 
+    # Sanitize URL: strip path/query to just scheme://host
+    if data.get("url"):
+        parsed = urlparse(data["url"])
+        data["url"] = f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
+
     return data, None
 
 
@@ -129,6 +141,39 @@ def resolve_auth(data):
 
 
 # ============================================================
+# Helper: CSRF token cache for cookie-based sessions
+# ============================================================
+_csrf_token_cache = {}  # base_url -> csrf_token
+
+
+def _fetch_csrf_token(base_url, cookies):
+    """Fetch CSRF token required for POST/PUT/DELETE with session cookies."""
+    cached = _csrf_token_cache.get(base_url)
+    if cached:
+        return cached
+    url = f"{base_url.rstrip('/')}/fscmRestApi/resources/latest"
+    headers = {
+        "Cookie": cookies,
+        "Accept": "application/json",
+    }
+    try:
+        resp = http_requests.get(url, headers=headers, timeout=30, verify=True)
+        # Oracle returns the CSRF token in the response header
+        csrf = resp.headers.get("X-ORACLE-DMS-ECID") or resp.headers.get("X-Oracle-Csrf-Token")
+        if not csrf:
+            # Fallback: try a HEAD request with Fetch header
+            headers["X-CSRF-Token"] = "Fetch"
+            resp2 = http_requests.head(url, headers=headers, timeout=30, verify=True)
+            csrf = resp2.headers.get("X-CSRF-Token") or resp2.headers.get("X-Oracle-Csrf-Token")
+        if csrf:
+            _csrf_token_cache[base_url] = csrf
+        return csrf
+    except Exception as e:
+        print(f"[WARN] Failed to fetch CSRF token: {e}", flush=True)
+        return None
+
+
+# ============================================================
 # Helper: Make Oracle API call
 # ============================================================
 def oracle_request(method, base_url, path, username=None, password=None, token=None, cookies=None, **kwargs):
@@ -141,6 +186,12 @@ def oracle_request(method, base_url, path, username=None, password=None, token=N
     auth = None
     if cookies:
         headers["Cookie"] = cookies
+        # Oracle REST API requires CSRF token for mutating requests with session cookies
+        if method.upper() in ("POST", "PUT", "PATCH", "DELETE"):
+            csrf = _fetch_csrf_token(base_url, cookies)
+            if csrf:
+                headers["X-CSRF-Token"] = csrf
+                headers["X-Oracle-Csrf-Token"] = csrf
     elif token:
         headers["Authorization"] = f"Bearer {token}"
     else:
@@ -268,6 +319,7 @@ def _role_matches(role_text, role_spec):
     txt = (role_text or "").lower()
     checks = [role_spec.get("code", ""), role_spec.get("name", "")]
     checks.extend(role_spec.get("aliases", []))
+    checks.extend(role_spec.get("alternativeCodes", []))
     for token in checks:
         token = str(token).lower().strip()
         if token and token in txt:
@@ -636,8 +688,8 @@ def export_roles():
                         f"(HTTP {resp.status_code})."
                     ),
                     "hint": (
-                        "Adicione ao usuario a role ORA_ASM_FUNCTIONAL_SETUPS_USER_ABSTRACT "
-                        "(Export Import Functional Setups User)."
+                        "Adicione ao usuario a role ORA_ASM_APPLICATION_IMPLEMENTATION_CONSULTANT_JOB "
+                        "(Application Implementation Consultant)."
                     ),
                     "apiVersion": api_version,
                     "path": path,
@@ -945,7 +997,7 @@ def export_roles():
 
         if not process_id:
             return jsonify({
-                "error": "ProcessId nao encontrado. O usuario pode nao ter a role ORA_ASM_FUNCTIONAL_SETUPS_USER_ABSTRACT.",
+                "error": "ProcessId nao encontrado. O usuario pode nao ter a role ORA_ASM_APPLICATION_IMPLEMENTATION_CONSULTANT_JOB (Application Implementation Consultant).",
                 "hint": "Verifique se o usuario tem permissao de Export Import Functional Setups User.",
                 "apiVersion": api_version,
                 "attempts": attempt_errors,
